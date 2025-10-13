@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ user.username }} - Target Status</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px auto;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #555;
+            color: white;
+        }
+        .green {
+            background-color: #c6f5c6;
+        }
+        .red {
+            background-color: #f5c6c6;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align: center;">{{ user.username }} - Yearly Target Status</h2>
+    <table>
+        <tr>
+            <th>Month</th>
+            <th>Target (sq ft)</th>
+            <th>Sold (sq ft)</th>
+            <th>Status</th>
+            <th>Carry Forward</th>
+        </tr>
+        {% for month in monthly_status %}
+        <tr class="{% if month.status == 'green' %}green{% else %}red{% endif %}">
+    <td>{{ month.month }}</td>
+    <td>{{ month.target_area }}</td>
+    <td>{{ month.sold_area }}</td>
+    <td>{{ month.status|title }}</td>
+    <td>{{ month.carry_forward }}</td>
+</tr>
+
+        {% endfor %}
+    </table>
+</body>
+</html>

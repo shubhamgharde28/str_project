@@ -1,0 +1,23 @@
+<h2>Monthly Targets</h2>
+<a href="{% url 'target-create' %}">Create Target</a>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>User</th>
+        <th>Month</th>
+        <th>Year</th>
+        <th>Target Area</th>
+        <th>Actions</th>
+    </tr>
+    {% for target in targets %}
+    <tr>
+        <td>{{ target.user.email }}</td>
+        <td>{{ target.get_month_display }}</td>
+        <td>{{ target.year }}</td>
+        <td>{{ target.target_area }}</td>
+        <td>
+            <a href="{% url 'target-update' target.pk %}">Edit</a> |
+            <a href="{% url 'target-delete' target.pk %}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>

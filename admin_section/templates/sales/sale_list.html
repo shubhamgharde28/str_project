@@ -1,0 +1,21 @@
+<h2>Sales</h2>
+<a href="{% url 'sale-create' %}">Create Sale</a>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>User</th>
+        <th>Date</th>
+        <th>Area Sold</th>
+        <th>Actions</th>
+    </tr>
+    {% for sale in sales %}
+    <tr>
+        <td>{{ sale.user.email }}</td>
+        <td>{{ sale.date }}</td>
+        <td>{{ sale.area_sold }}</td>
+        <td>
+            <a href="{% url 'sale-update' sale.pk %}">Edit</a> |
+            <a href="{% url 'sale-delete' sale.pk %}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
