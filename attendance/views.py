@@ -248,3 +248,230 @@ class UserTargetStatusAPI(APIView):
         serializer = UserTargetStatusSerializer(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from django.utils import timezone
+from .models import Attendance
+from .serializers import AttendanceSerializer
+
+# ----------------- CHECK-IN -----------------
+class AttendanceCheckInView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
+
+        # Get or create today's attendance
+        attendance, created = Attendance.objects.get_or_create(user=user, date=timezone.localdate())
+
+        if attendance.check_in_time:
+            return Response(
+                {"message": "You have already checked in today.", "attendance": AttendanceSerializer(attendance).data},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        attendance.check_in_time = timezone.now()
+        attendance.check_in_latitude = latitude
+        attendance.check_in_longitude = longitude
+        attendance.save()
+
+        serializer = AttendanceSerializer(attendance)
+        return Response(
+            {"message": "Successfully checked in.", "attendance": serializer.data},
+            status=status.HTTP_200_OK
+        )
+
+
+# ----------------- CHECK-OUT -----------------
+class AttendanceCheckOutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
+
+        try:
+            attendance = Attendance.objects.get(user=user, date=timezone.localdate())
+        except Attendance.DoesNotExist:
+            return Response(
+                {"message": "No check-in record found for today."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if attendance.check_out_time:
+            return Response(
+                {"message": "You have already checked out today.", "attendance": AttendanceSerializer(attendance).data},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        attendance.check_out_time = timezone.now()
+        attendance.check_out_latitude = latitude
+        attendance.check_out_longitude = longitude
+        attendance.save()
+
+        serializer = AttendanceSerializer(attendance)
+        return Response(
+            {"message": "Successfully checked out.", "attendance": serializer.data},
+            status=status.HTTP_200_OK
+        )
+
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from django.db.models import Q
+from datetime import timedelta
+from django.utils import timezone
+from .models import WorkPlan
+from .serializers import WorkPlanSerializer, WorkPlanCreateSerializer
+
+
+class UserWorkPlanListCreateView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = WorkPlan.objects.filter(type='user_created').filter(
+            Q(created_by=user) | Q(coworkers=user)
+        )
+
+        # Filter options
+        filter_type = self.request.query_params.get('filter')  # daily, weekly, monthly
+        today = timezone.localdate()
+
+        if filter_type == 'daily':
+            queryset = queryset.filter(date=today)
+        elif filter_type == 'weekly':
+            start_of_week = today - timedelta(days=today.weekday())
+            end_of_week = start_of_week + timedelta(days=6)
+            queryset = queryset.filter(date__range=[start_of_week, end_of_week])
+        elif filter_type == 'monthly':
+            queryset = queryset.filter(date__year=today.year, date__month=today.month)
+
+        # Title search
+        title = self.request.query_params.get('title')
+        if title:
+            queryset = queryset.filter(titles__title__icontains=title)
+
+        # Manual date filter (optional)
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        if start_date and end_date:
+            queryset = queryset.filter(date__range=[start_date, end_date])
+
+        return queryset.order_by('-date')
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return WorkPlanCreateSerializer
+        return WorkPlanSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+
+class UserWorkPlanDetailView(generics.RetrieveUpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = WorkPlanSerializer
+    queryset = WorkPlan.objects.filter(type='user_created')
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        status_value = request.data.get('status')
+        if status_value:
+            instance.status = status_value
+            instance.save()
+            return Response({
+                "id": instance.id,
+                "status": instance.status,
+                "message": "Work plan status updated successfully!"
+            }, status=status.HTTP_200_OK)
+        return Response({"detail": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import permissions
+from django.db.models import Q
+from datetime import timedelta
+from .models import WorkPlan
+from .serializers import WorkPlanSerializer
+from collections import defaultdict
+
+class UserWorkPlanAllView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Get all user-created + shared plans
+        queryset = WorkPlan.objects.filter(type='user_created').filter(
+            Q(created_by=user) | Q(coworkers=user)
+        ).order_by('date')
+
+        grouped_data = {
+            "daily": defaultdict(list),
+            "weekly": defaultdict(list),
+            "monthly": defaultdict(list)
+        }
+
+        for wp in queryset:
+            # --- Daily ---
+            grouped_data["daily"][str(wp.date)].append(WorkPlanSerializer(wp).data)
+
+            # --- Weekly ---
+            start_of_week = wp.date - timedelta(days=wp.date.weekday())
+            end_of_week = start_of_week + timedelta(days=6)
+            week_key = f"{start_of_week}_to_{end_of_week}"
+            grouped_data["weekly"][week_key].append(WorkPlanSerializer(wp).data)
+
+            # --- Monthly ---
+            month_key = wp.date.strftime("%Y-%m")
+            grouped_data["monthly"][month_key].append(WorkPlanSerializer(wp).data)
+
+        # Convert defaultdict to normal dict for JSON
+        grouped_data["daily"] = dict(grouped_data["daily"])
+        grouped_data["weekly"] = dict(grouped_data["weekly"])
+        grouped_data["monthly"] = dict(grouped_data["monthly"])
+
+        return Response(grouped_data)
+
+from rest_framework import generics, permissions
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.utils import timezone
+from .models import HourlyReport
+from .serializers import HourlyReportSerializer, HourlyReportCreateSerializer
+
+class HourlyReportCreateView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = HourlyReportCreateSerializer
+
+class HourlyReportListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = HourlyReportSerializer
+
+    def get_queryset(self):
+        return HourlyReport.objects.filter(user=self.request.user).order_by('-report_date', '-report_hour')
+
+# Pending check API
+class PendingHourlyReportCheckView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        now = timezone.localtime()
+        current_hour = now.hour
+        today = now.date()
+
+        exists = HourlyReport.objects.filter(
+            user=user,
+            report_date=today,
+            report_hour=current_hour
+        ).exists()
+
+        if not exists:
+            return Response({"pending": True, "message": f"Your hourly report for {current_hour}:00 is pending!"})
+        return Response({"pending": False, "message": "All reports submitted for this hour."})

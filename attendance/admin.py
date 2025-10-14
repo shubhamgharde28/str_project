@@ -22,7 +22,8 @@ admin.site.register(User, UserAdmin)
 
 
 from django.contrib import admin
-from .models import UserProfile
+from .models import UserProfile, Attendance
+
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -39,3 +40,88 @@ class UserProfileAdmin(admin.ModelAdmin):
     def user_email(self, obj):
         return obj.user.email
     user_email.short_description = 'Email'
+
+
+
+@admin.register(Attendance)
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = (
+        'user_email', 'first_name', 'last_name', 'date', 
+        'check_in_time', 'check_out_time', 'check_in_latitude', 'check_in_longitude'
+    )
+    search_fields = ('user__email', 'user__profile__first_name', 'user__profile__last_name')
+    list_filter = ('date',)
+    
+    def user_email(self, obj):
+        return obj.user.email
+    user_email.short_description = 'User Email'
+
+    def first_name(self, obj):
+        if hasattr(obj.user, 'profile'):
+            return obj.user.profile.first_name
+        return ''
+    
+    def last_name(self, obj):
+        if hasattr(obj.user, 'profile'):
+            return obj.user.profile.last_name
+        return ''
+    
+
+from django.contrib import admin
+from .models import WorkPlan, WorkPlanTitle
+
+@admin.register(WorkPlanTitle)
+class WorkPlanTitleAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'description')
+    search_fields = ('title',)
+
+
+@admin.register(WorkPlan)
+class WorkPlanAdmin(admin.ModelAdmin):
+    list_display = ('id', 'created_by', 'date', 'status', 'type')
+    list_filter = ('status', 'type', 'date')
+    search_fields = ('description',)
+    filter_horizontal = ('coworkers', 'titles')
+
+
+
+from django.contrib import admin
+from .models import WorkType, WorkTypeOption, HourlyReport, WorkDetail
+
+# Inline for WorkTypeOption under WorkType
+class WorkTypeOptionInline(admin.TabularInline):
+    model = WorkTypeOption
+    extra = 1  # Number of empty fields
+    show_change_link = True
+
+@admin.register(WorkType)
+class WorkTypeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'description']
+    search_fields = ['name']
+    inlines = [WorkTypeOptionInline]
+
+# Inline for WorkDetail under HourlyReport
+class WorkDetailInline(admin.TabularInline):
+    model = WorkDetail
+    extra = 1
+    show_change_link = True
+
+@admin.register(HourlyReport)
+class HourlyReportAdmin(admin.ModelAdmin):
+    list_display = ['user', 'report_date', 'report_hour', 'work_done', 'created_at']
+    list_filter = ['report_date', 'report_hour', 'work_done']
+    search_fields = ['user__username', 'user__email']
+    inlines = [WorkDetailInline]
+    filter_horizontal = ['work_types', 'work_type_options']  # For ManyToMany fields
+
+@admin.register(WorkTypeOption)
+class WorkTypeOptionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'work_type', 'description']
+    list_filter = ['work_type']
+    search_fields = ['name', 'work_type__name']
+
+@admin.register(WorkDetail)
+class WorkDetailAdmin(admin.ModelAdmin):
+    list_display = ['hourly_report', 'work_type_option', 'customer_name', 'customer_response']
+    list_filter = ['customer_response', 'work_type_option']
+    search_fields = ['customer_name', 'project_name', 'mobile_number']

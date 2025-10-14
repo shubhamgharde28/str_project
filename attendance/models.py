@@ -52,4 +52,132 @@ class UserProfile(models.Model):
         return f"{self.user.email} Profile"
 
 
+from django.db import models
+from django.contrib.auth.models import User
 
+class Attendance(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendances')
+    date = models.DateField(auto_now_add=True)
+    check_in_time = models.DateTimeField(null=True, blank=True)
+    check_in_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    check_in_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    check_out_time = models.DateTimeField(null=True, blank=True)
+    check_out_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    check_out_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('user', 'date')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.date}"
+
+
+from django.db import models
+from django.contrib.auth.models import User
+
+
+class WorkPlanTitle(models.Model):
+    title = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.title
+
+
+class WorkPlan(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_process', 'In Process'),
+        ('completed', 'Completed'),
+    ]
+
+    TYPE_CHOICES = [
+        ('user_created', 'User Created'),
+        ('admin_created', 'Admin Created'),
+    ]
+
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_workplans')
+    coworkers = models.ManyToManyField(User, related_name='shared_workplans', blank=True)
+    titles = models.ManyToManyField(WorkPlanTitle, related_name='workplans')
+    description = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='user_created')
+    date = models.DateField()  # 🟢 Now user will manually select this date
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.created_by.username} ({self.date})"
+
+
+
+from django.db import models
+from django.contrib.auth.models import User
+
+# Customer response choices
+CUSTOMER_RESPONSE_CHOICES = [
+    ('interested', 'Interested'),
+    ('not_interested', 'Not Interested'),
+    ('not_sure', 'Not Sure')
+]
+
+# Yes/No choice
+YES_NO_CHOICES = [
+    ('yes', 'Yes'),
+    ('no', 'No')
+]
+
+class WorkType(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+class WorkTypeOption(models.Model):
+    work_type = models.ForeignKey(WorkType, on_delete=models.CASCADE, related_name='options')
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.work_type.name} - {self.name}"
+
+class HourlyReport(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hourly_reports')
+    report_date = models.DateField()  # Date of the report
+    report_hour = models.IntegerField()  # Hour 0-23
+    location_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    location_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    
+    work_done = models.CharField(max_length=3, choices=YES_NO_CHOICES)
+    reason_not_done = models.TextField(blank=True, null=True)
+
+    # Work types and options selected
+    work_types = models.ManyToManyField(WorkType, blank=True, related_name='hourly_reports')
+    work_type_options = models.ManyToManyField(WorkTypeOption, blank=True, related_name='hourly_reports')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.report_date} - Hour {self.report_hour}"
+
+class WorkDetail(models.Model):
+    hourly_report = models.ForeignKey(HourlyReport, on_delete=models.CASCADE, related_name='details')
+    work_type_option = models.ForeignKey(WorkTypeOption, on_delete=models.CASCADE)
+    
+    customer_name = models.CharField(max_length=100, blank=True, null=True)
+    mobile_number = models.CharField(max_length=15, blank=True, null=True)
+    plot_number = models.CharField(max_length=50, blank=True, null=True)
+    project_name = models.CharField(max_length=100, blank=True, null=True)
+    
+    customer_response = models.CharField(max_length=15, choices=CUSTOMER_RESPONSE_CHOICES)
+    reason_not_interested = models.TextField(blank=True, null=True)
+
+    site_visit_done = models.BooleanField(default=False)
+    meeting_done = models.BooleanField(default=False)
+    booking_done = models.BooleanField(default=False)
+    next_followup_date = models.DateField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.hourly_report} - {self.work_type_option.name}"
