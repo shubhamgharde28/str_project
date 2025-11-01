@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container" style="max-width:700px;">
+    <h2>User Detail</h2>
+    <div style="margin-bottom:20px;">
+    <a href="{% url 'edit_user' user_obj.id %}" class="approve-btn" style="background:#ffc107;">Edit</a>
+    <a href="{% url 'delete_user' user_obj.id %}" class="approve-btn" style="background:#dc3545;"
+       onclick="return confirm('Are you sure you want to delete this user?')">Delete</a>
+</div>
+
+<a href="{% url 'user_list' %}" style="display:inline-block;margin-bottom:15px;">&larr; Back to Users List</a>
+
+    <table style="width:100%; border-collapse:collapse;">
+        <tr><th>Username</th><td>{{ user_obj.username }}</td></tr>
+        <tr><th>Email</th><td>{{ user_obj.email }}</td></tr>
+        <tr><th>Status</th><td>{% if user_obj.is_active %}Active{% else %}Inactive{% endif %}</td></tr>
+        <tr><th>Superuser</th><td>{{ user_obj.is_superuser }}</td></tr>
+        {% if profile %}
+        <tr><th>First Name</th><td>{{ profile.first_name }}</td></tr>
+        <tr><th>Last Name</th><td>{{ profile.last_name }}</td></tr>
+        <tr><th>Designation</th><td>{{ profile.designation }}</td></tr>
+        <tr><th>Department</th><td>{{ profile.department }}</td></tr>
+        <tr><th>Mobile</th><td>{{ profile.mobile_number }}</td></tr>
+        <tr><th>Date of Birth</th><td>{{ profile.date_of_birth }}</td></tr>
+        <tr><th>Gender</th><td>{{ profile.gender }}</td></tr>
+        <tr><th>Marital Status</th><td>{{ profile.marital_status }}</td></tr>
+        <tr><th>Aadhaar</th><td>{{ profile.aadhaar_number }}</td></tr>
+        <tr><th>PAN</th><td>{{ profile.pan_number }}</td></tr>
+        <tr><th>Locality</th><td>{{ profile.locality }}</td></tr>
+        <tr><th>City</th><td>{{ profile.city }}</td></tr>
+        <tr><th>State</th><td>{{ profile.state }}</td></tr>
+        <tr><th>Pincode</th><td>{{ profile.pincode }}</td></tr>
+        {% endif %}
+    </table>
+</div>
+{% endblock %}

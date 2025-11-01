@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="dashboard-container">
+    <h1>📊 WorkPlan Dashboard</h1>
+
+    <!-- STAT CARDS -->
+    <div class="stat-cards">
+        <div class="stat-card">
+            <div class="stat-card-icon success">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-card-value">{{ total_users }}</div>
+            <div class="stat-card-label">Total Users</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-icon warning">
+                <i class="fas fa-user-clock"></i>
+            </div>
+            <div class="stat-card-value">{{ pending_users }}</div>
+            <div class="stat-card-label">Pending Users</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-icon info">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="stat-card-value">{{ admin_workplans_count }}</div>
+            <div class="stat-card-label">Admin WorkPlans</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-icon danger">
+                <i class="fas fa-user-edit"></i>
+            </div>
+            <div class="stat-card-value">{{ user_workplans_count }}</div>
+            <div class="stat-card-label">User WorkPlans</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-icon purple">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="stat-card-value">{{ total_titles }}</div>
+            <div class="stat-card-label">WorkPlan Titles</div>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="dashboard-buttons">
+        <a href="{% url 'admin_workplan_create' %}" class="btn btn-primary">➕ Create Admin WorkPlan</a>
+        <a href="{% url 'admin_workplan_list' %}" class="btn btn-outline-primary">View Admin WorkPlans</a>
+        <a href="{% url 'user_workplan_create' %}" class="btn btn-success">➕ Create User WorkPlan</a>
+        <a href="{% url 'user_workplan_list' %}" class="btn btn-outline-success">View User WorkPlans</a>
+        <a href="{% url 'workplantitle_create' %}" class="btn btn-info">➕ Create WorkPlan Title</a>
+        <a href="{% url 'workplantitle_list' %}" class="btn btn-outline-info">View WorkPlan Titles</a>
+    </div>
+
+    <!-- RECENT ACTIVITY -->
+    <div class="recent-activities">
+        <h2>Recent Activities</h2>
+        <div class="activities-list">
+            {% if recent_activity %}
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--primary);">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="activity-details">
+                        <div class="activity-title">{{ recent_activity.title }}</div>
+                        <div class="activity-description">{{ recent_activity.description }}</div>
+                    </div>
+                    <div class="activity-time">{{ recent_activity.time }}</div>
+                </div>
+            {% else %}
+                <p>No recent activity.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --primary: #007bff;
+    --success: #28a745;
+    --warning: #ffc107;
+    --info: #17a2b8;
+    --danger: #dc3545;
+    --purple: #6f42c1;
+}
+
+.dashboard-container {
+    max-width: 1250px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.dashboard-container h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.stat-card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin: 0 auto 10px;
+    font-size: 1.5rem;
+}
+
+.stat-card-icon.success { background: var(--success); }
+.stat-card-icon.warning { background: var(--warning); }
+.stat-card-icon.info { background: var(--info); }
+.stat-card-icon.danger { background: var(--danger); }
+.stat-card-icon.purple { background: var(--purple); }
+
+.stat-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.stat-card-label {
+    color: #666;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+/* Dashboard buttons */
+.dashboard-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 40px;
+}
+
+.dashboard-buttons a.btn {
+    padding: 12px 22px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+/* Recent activity */
+.recent-activities {
+    margin-top: 40px;
+}
+
+.recent-activities h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+.activities-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-bottom: 10px;
+    transition: background 0.3s ease;
+}
+
+.activity-item:hover {
+    background: #e9ecef;
+}
+
+.activity-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 1.2rem;
+}
+
+.activity-details {
+    flex-grow: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.activity-description {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.activity-time {
+    font-size: 0.85rem;
+    color: #888;
+}
+</style>
+{% endblock %}

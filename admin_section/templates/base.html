@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}NexusCRM Pro{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ===== CSS Variables ===== */
+    :root {
+      /* Blue shades - Professional and trustworthy */
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #3b82f6;
+      --primary-pale: #dbeafe;
+      
+      /* Green shades - Success and growth */
+      --secondary: #059669;
+      --secondary-dark: #047857;
+      --secondary-light: #10b981;
+      --secondary-pale: #d1fae5;
+      
+      /* Red shades - Urgent and attention */
+      --danger: #dc2626;
+      --danger-dark: #b91c1c;
+      --danger-light: #ef4444;
+      --danger-pale: #fee2e2;
+      
+      /* Yellow shades - Warning and highlights */
+      --accent: #d97706;
+      --accent-dark: #b45309;
+      --accent-light: #f59e0b;
+      --accent-pale: #fef3c7;
+      
+      /* Neutral shades - Structure and balance */
+      --dark: #0f172a;
+      --dark-light: #334155;
+      --light: #f8fafc;
+      --white: #ffffff;
+      
+      /* Gray shades - Text and backgrounds */
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      
+      /* Semantic colors */
+      --success: var(--secondary);
+      --warning: var(--accent);
+      --info: var(--primary-light);
+      
+      /* Design tokens */
+      --border-radius: 16px;
+      --border-radius-sm: 8px;
+      --shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.12);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+    }
+
+    /* ===== Reset & Base Styles ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+      color: var(--gray-800);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ===== Header Styles ===== */
+    .main-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      z-index: 1000;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.75rem;
+      font-weight: 800;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--gradient);
+      border-radius: 12px;
+      color: var(--white);
+      font-size: 1.2rem;
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .header-nav a {
+      color: var(--gray-600);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--border-radius-sm);
+      transition: var(--transition);
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-nav a:hover {
+      color: var(--primary);
+      background: var(--primary-pale);
+    }
+
+    .header-nav a.active {
+      color: var(--primary);
+      background: var(--primary-pale);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .user-profile:hover {
+      background: var(--gray-100);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--gray-800);
+    }
+
+    .user-role {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    /* ===== Enhanced Sidebar Styles ===== */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 80px;
+      width: 280px;
+      height: calc(100vh - 80px);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--gray-200);
+      padding: 2rem 0;
+      z-index: 999;
+      transition: var(--transition);
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar-section {
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    /* Enhanced Sidebar Title with Dropdown */
+    .sidebar-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gray-500);
+      margin-bottom: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      border-radius: var(--border-radius-sm);
+      margin: 0 0.5rem 0.5rem;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+    }
+
+    .sidebar-title:hover {
+      background: var(--gray-100);
+      color: var(--primary);
+      border-color: var(--primary-pale);
+    }
+
+    .sidebar-title.active {
+      background: var(--primary-pale);
+      color: var(--primary);
+      border-color: var(--primary-light);
+    }
+
+    .dropdown-icon {
+      transition: var(--transition);
+      font-size: 0.7rem;
+      color: var(--gray-400);
+    }
+
+    .sidebar-title:hover .dropdown-icon,
+    .sidebar-title.active .dropdown-icon {
+      color: var(--primary);
+    }
+
+    .sidebar-title.active .dropdown-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Dropdown Menu */
+    .dropdown-menu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--white);
+      border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
+      margin: 0 0.5rem;
+      border: 1px solid transparent;
+      border-top: none;
+    }
+
+    .dropdown-menu.active {
+      max-height: 500px;
+      border-color: var(--gray-200);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0.5rem 0;
+    }
+
+    .sidebar nav ul li {
+      margin-bottom: 0.25rem;
+    }
+
+    .sidebar nav ul li a {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      color: var(--gray-700);
+      text-decoration: none;
+      border-radius: var(--border-radius-sm);
+      transition: var(--transition);
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+      margin: 0 0.5rem;
+      border: 1px solid transparent;
+    }
+
+    .sidebar nav ul li a::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background: var(--primary);
+      transform: scaleY(0);
+      transition: var(--transition);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .sidebar nav ul li a:hover {
+      background: var(--primary-pale);
+      color: var(--primary);
+      transform: translateX(4px);
+    }
+
+    .sidebar nav ul li a:hover::before {
+      transform: scaleY(1);
+    }
+
+    .sidebar nav ul li a.active {
+      background: #d3f4f7;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .sidebar nav ul li a.active::before {
+      transform: scaleY(1);
+    }
+
+    /* Icon styling */
+    .sidebar nav ul li a i {
+      width: 16px;
+      text-align: center;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+
+    .sidebar nav ul li a:hover i,
+    .sidebar nav ul li a.active i {
+      transform: scale(1.1);
+    }
+
+    /* ===== Main Content Styles ===== */
+    .main-content {
+      margin-left: 280px;
+      margin-top: 80px;
+      padding: 2rem;
+      min-height: calc(100vh - 80px);
+      transition: var(--transition);
+      background: var(--gray-50);
+    }
+
+    /* ===== Footer Styles ===== */
+    .main-footer {
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      color: var(--gray-600);
+      font-size: 0.875rem;
+      margin-left: 280px;
+      transition: var(--transition);
+    }
+
+    /* ===== Menu Toggle ===== */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--gray-700);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: var(--border-radius-sm);
+      transition: var(--transition);
+    }
+
+    .menu-toggle:hover {
+      background: var(--gray-100);
+    }
+
+    /* ===== Scrollbar Styling ===== */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 10px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: var(--gray-400);
+    }
+
+    /* ===== Responsive Design ===== */
+    @media (max-width: 1024px) {
+      .sidebar {
+        width: 240px;
+      }
+      .main-content,
+      .main-footer {
+        margin-left: 240px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      .header-nav {
+        display: none;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+        box-shadow: 20px 0 40px rgba(15, 23, 42, 0.15);
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      .main-content,
+      .main-footer {
+        margin-left: 0;
+      }
+
+      .main-header {
+        padding: 0 1rem;
+      }
+
+      .main-content {
+        padding: 1.5rem;
+      }
+
+      .user-profile .user-info {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .sidebar {
+        width: 280px;
+      }
+
+      .logo {
+        font-size: 1.25rem;
+      }
+
+      .main-content {
+        padding: 1rem;
+      }
+    }
+
+    /* ===== Utility Classes ===== */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <!-- Header -->
+  <header class="main-header">
+    <div class="logo">
+      <div class="logo-icon">
+        <i class="fas fa-cube"></i>
+      </div>
+      NexusCRM Pro
+    </div>
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+      <i class="fas fa-bars"></i>
+    </button>
+    <nav class="header-nav" aria-label="Main navigation">
+      <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
+      <a href="#"><i class="fas fa-bell"></i> Notifications</a>
+      <a href="#"><i class="fas fa-cog"></i> Settings</a>
+      <div class="user-profile">
+        <div class="user-avatar">JD</div>
+        <div class="user-info">
+          <div class="user-name">John Doe</div>
+          <div class="user-role">Administrator</div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" aria-label="Sidebar navigation">
+    <div class="sidebar-section">
+      <div class="sidebar-title active" data-dropdown="general">
+        <span>GENERAL</span>
+        <i class="fas fa-chevron-down dropdown-icon" style="transform: rotate(180deg);"></i>
+      </div>
+      <div class="dropdown-menu active" id="general-dropdown">
+        <nav>
+          <ul>
+            <li>
+              <a href="{% url 'dashboard' %}" class="active" aria-current="page">
+                <i class="fas fa-chart-pie"></i>
+                Dashboard
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'user_list' %}">
+                <i class="fas fa-users"></i>
+                Employees
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'daily_attendance_dashboard' %}">
+                <i class="fas fa-clipboard-list"></i>
+                Attendance Data
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'target-sale-dashboard' %}">
+                <i class="fa fa-bullseye"></i>
+                Targets
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'workplan_dashboard' %}">
+                <i class="fas fa-calendar-alt"></i>
+                Workplans
+              </a>
+            </li>
+            
+            <li>
+              <a href="#">
+                <i class="fas fa-project-diagram"></i>
+                Projects
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <i class="fas fa-tasks"></i>
+                Tasks
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-title" data-dropdown="analytics">
+        <span>ANALYTICS</span>
+        <i class="fas fa-chevron-down dropdown-icon"></i>
+      </div>
+      <div class="dropdown-menu" id="analytics-dropdown">
+        <nav>
+          <ul>
+            <li>
+              <a href="#">
+                <i class="fas fa-chart-line"></i>
+                Performance
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <i class="fas fa-chart-bar"></i>
+                Reports
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Revenue
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <i class="fas fa-trending-up"></i>
+                Growth
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-title" data-dropdown="settings">
+        <span>SETTINGS</span>
+        <i class="fas fa-chevron-down dropdown-icon"></i>
+      </div>
+      <div class="dropdown-menu" id="settings-dropdown">
+        <nav>
+          <ul>
+            <li>
+              <a href="#">
+                <i class="fas fa-user-cog"></i>
+                Account
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <i class="fas fa-shield-alt"></i>
+                Security
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <i class="fas fa-palette"></i>
+                Appearance
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    {% block content %}
+    <!-- Content will be injected here from child templates -->
+    {% endblock content %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <p>&copy; 2025 NexusCRM Pro. All rights reserved. | v2.4.1</p>
+  </footer>
+
+  <script>
+    // Enhanced Sidebar Functionality
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+      
+      // Toggle icon
+      const icon = menuToggle.querySelector('i');
+      if (sidebar.classList.contains('active')) {
+        icon.className = 'fas fa-times';
+      } else {
+        icon.className = 'fas fa-bars';
+      }
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (event) => {
+      const isClickInsideSidebar = sidebar.contains(event.target);
+      const isClickInsideMenuToggle = menuToggle.contains(event.target);
+      
+      if (window.innerWidth <= 768 && !isClickInsideSidebar && !isClickInsideMenuToggle && sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+        menuToggle.querySelector('i').className = 'fas fa-bars';
+      }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) {
+        sidebar.classList.remove('active');
+        menuToggle.querySelector('i').className = 'fas fa-bars';
+      }
+    });
+
+    // Dropdown functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const dropdownTitles = document.querySelectorAll('.sidebar-title');
+      
+      dropdownTitles.forEach(title => {
+        title.addEventListener('click', function() {
+          const dropdownId = this.getAttribute('data-dropdown');
+          const dropdownMenu = document.getElementById(`${dropdownId}-dropdown`);
+          const icon = this.querySelector('.dropdown-icon');
+          
+          // Toggle active class
+          this.classList.toggle('active');
+          dropdownMenu.classList.toggle('active');
+          
+          // Rotate icon
+          if (this.classList.contains('active')) {
+            icon.style.transform = 'rotate(180deg)';
+          } else {
+            icon.style.transform = 'rotate(0deg)';
+          }
+        });
+      });
+    });
+  </script>
+  
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+
+        th, td {
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            padding: 10px 15px;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f1f1f1;
+        }
+
+        .approve-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .approve-btn:hover {
+            background-color: #218838;
+        }
+
+        .approved {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .not-approved {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .message {
+            text-align: center;
+            color: green;
+            margin-bottom: 10px;
+        }
+
+        /* ---------- MODAL STYLING ---------- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            padding: 25px 30px;
+            width: 350px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .modal p {
+            color: #666;
+            font-size: 15px;
+            margin: 15px 0 25px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .btn {
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-approve {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .btn-cancel {
+            background-color: #ccc;
+            color: #333;
+        }
+
+        .btn-approve:hover { background-color: #218838; }
+        .btn-cancel:hover { background-color: #b3b3b3; }
+    </style>
+<div class="container">
+    <h2>User Management</h2>
+
+    {% if messages %}
+    <div class="message">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- --------- SUMMARY BAR --------- -->
+    <div style="display:flex; justify-content: space-between; margin-bottom:20px;">
+        <div style="background:#007bff;color:#fff;padding:15px;border-radius:8px;flex:1;margin-right:10px;text-align:center;">
+            <h3>{{ total_users }}</h3>
+            <p>Total Employees</p>
+        </div>
+        <div style="background:#28a745;color:#fff;padding:15px;border-radius:8px;flex:1;margin-right:10px;text-align:center;">
+            <h3>{{ approved_users }}</h3>
+            <p>Approved</p>
+        </div>
+        <div style="background:#dc3545;color:#fff;padding:15px;border-radius:8px;flex:1;margin-right:10px;text-align:center;">
+            <h3>{{ pending_users }}</h3>
+            <p>Pending</p>
+        </div>
+        <div style="background:#ffc107;color:#fff;padding:15px;border-radius:8px;flex:1;text-align:center;">
+            <h3>{{ super_users }}</h3>
+            <p>Admins</p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Date Joined</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+            <td>
+                {% if user.is_active %}
+                    <span class="approved">Approved</span>
+                {% else %}
+                    <span class="not-approved">Pending</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if not user.is_active %}
+                <button class="approve-btn" onclick="openModal('{{ user.id }}', '{{ user.username }}')">Approve</button>
+                {% endif %}
+                <a href="{% url 'edit_user' user.id %}" class="approve-btn" style="background:#ffc107;">Edit</a>
+                <a href="{% url 'delete_user' user.id %}" class="approve-btn" style="background:#dc3545;">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ---------- APPROVAL MODAL ---------- -->
+<div id="approveModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirm Approval</h3>
+        <p id="modalText">Are you sure you want to approve this user?</p>
+        <div class="modal-buttons">
+            <button class="btn btn-approve" id="confirmApprove">Approve</button>
+            <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedUserId = null;
+    let selectedUsername = "";
+
+    function openModal(userId, username) {
+        selectedUserId = userId;
+        selectedUsername = username;
+        document.getElementById('modalText').innerText = "Approve user \"" + username + "\"?";
+        document.getElementById('approveModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('approveModal').style.display = 'none';
+    }
+
+    document.getElementById('confirmApprove').addEventListener('click', function() {
+        if (selectedUserId) {
+            window.location.href = "/users/approve/" + selectedUserId + "/";
+        }
+    });
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('approveModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+</script>
+{% endblock %}

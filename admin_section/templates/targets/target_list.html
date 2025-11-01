@@ -1,5 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+
 <h2>Monthly Targets</h2>
 <a href="{% url 'target-create' %}">Create Target</a>
+<a href="{% url 'sale-list' %}">Achived target</a>
 <table border="1" cellpadding="5">
     <tr>
         <th>User</th>
@@ -10,7 +14,7 @@
     </tr>
     {% for target in targets %}
     <tr>
-        <td>{{ target.user.email }}</td>
+        <td>{{ target.user.profile.first_name }} {{ target.user.profile.last_name }}</td>
         <td>{{ target.get_month_display }}</td>
         <td>{{ target.year }}</td>
         <td>{{ target.target_area }}</td>
@@ -21,3 +25,6 @@
     </tr>
     {% endfor %}
 </table>
+
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Edit User</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <label>Username:</label><br>
+        <input type="text" name="username" value="{{ user.username }}" required><br><br>
+        <label>Email:</label><br>
+        <input type="email" name="email" value="{{ user.email }}" required><br><br>
+        <button type="submit" class="approve-btn">Update</button>
+        <a href="{% url 'user_list' %}" class="approve-btn" style="background:#6c757d;">Cancel</a>
+    </form>
+</div>
+{% endblock %}

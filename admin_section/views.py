@@ -96,6 +96,20 @@ from django.db.models import Sum
 from .models import MonthlyTarget, Sale
 from datetime import date
 
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from .models import MonthlyTarget, Sale
+from django.db.models import Sum
+from datetime import date
+
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from django.db.models import Sum
+from .models import MonthlyTarget, Sale
+from datetime import date
+
+
+
 def user_target_status(request, user_id):
     user = get_object_or_404(User, id=user_id)
     year = date.today().year  # you can also allow selecting year dynamically
@@ -133,4 +147,604 @@ def user_target_status(request, user_id):
         'monthly_status': monthly_status,
         'year': year
     })
+
+
+
+from django.shortcuts import render
+from .models import MonthlyTarget, Sale
+from django.contrib.auth.models import User
+from django.db.models import Sum
+
+from django.contrib.auth.models import User
+from datetime import date
+from django.db.models import Sum
+from .models import MonthlyTarget, Sale
+from django.shortcuts import render
+
+def target_and_sale_dashboard(request):
+    # Get year and month from GET params, fallback to current date
+    today = date.today()
+    year = int(request.GET.get('year', today.year))
+    month = request.GET.get('month')
+    if month:
+        month = int(month)
+    
+    total_targets = MonthlyTarget.objects.filter(year=year)
+    total_sales = Sale.objects.filter(year=year)
+    total_users = User.objects.exclude(is_superuser=True).count()
+
+    total_target_area = total_targets.aggregate(total=Sum('target_area'))['total'] or 0
+    total_sold_area = total_sales.aggregate(total=Sum('area_sold'))['total'] or 0
+
+    progress_percent = round((total_sold_area / total_target_area) * 100, 2) if total_target_area else 0.0
+
+    users_status = []
+    users = User.objects.exclude(is_superuser=True).order_by('username')
+    for user in users:
+        user_targets = MonthlyTarget.objects.filter(user=user, year=year)
+        if month:
+            user_targets = user_targets.filter(month=month)
+        user_targets = user_targets.order_by('month')
+
+        monthly_status = []
+        carry_forward = 0
+
+        for target in user_targets:
+            sales = Sale.objects.filter(user=user, year=year, month=target.month).aggregate(total_sold=Sum('area_sold'))
+            total_sold = sales['total_sold'] or 0
+            effective_sold = total_sold + carry_forward
+
+            if effective_sold >= target.target_area:
+                status = 'green'
+                carry_forward = effective_sold - target.target_area
+            else:
+                status = 'red'
+                carry_forward = 0
+
+            monthly_status.append({
+                'month': target.get_month_display(),
+                'target_area': target.target_area,
+                'sold_area': total_sold,
+                'status': status,
+                'carry_forward': carry_forward,
+            })
+
+        users_status.append({
+            'user': user,
+            'monthly_status': monthly_status,
+        })
+
+    context = {
+        'total_targets': total_targets.count(),
+        'total_sales': total_sales.count(),
+        'total_users': total_users,
+        'total_target_area': total_target_area,
+        'total_sold_area': total_sold_area,
+        'progress_percent': progress_percent,
+        'users_status': users_status,
+        'year': year,
+        'month': month,
+    }
+    return render(request, 'targets/target_and_sale_dashboard.html', context)
+
+from django.contrib.auth.models import User
+from django.shortcuts import render
+
+from django.utils.timesince import timesince
+from django.utils.timezone import now
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
+from django.shortcuts import render
+
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
+from django.shortcuts import render
+
+def superuser_required(view_func):
+    decorated_view_func = user_passes_test(lambda u: u.is_superuser)(view_func)
+    return decorated_view_func
+
+
+
+from django.utils.timesince import timesince
+from django.utils.timezone import now
+
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from django.utils.timesince import timesince
+from datetime import date
+from attendance.models import Attendance
+
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from datetime import date
+from attendance.models import Attendance
+
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from attendance.models import Attendance, WorkPlan
+from datetime import date
+from django.utils.timesince import timesince
+from django.contrib.auth.decorators import user_passes_test
+
+
+def dashboard_view(request):
+    today = date.today()
+    users = User.objects.exclude(is_superuser=True)
+
+    total_users = users.count()
+
+    # Attendance stats
+    checked_in_att = Attendance.objects.filter(date=today, check_in_time__isnull=False).select_related('user')
+    checked_in_count = checked_in_att.count()
+    not_checked_in_count = total_users - checked_in_count
+
+    # WorkPlan stats
+    admin_workplans_count = WorkPlan.objects.filter(type='admin_created').count()
+    user_workplans_count = WorkPlan.objects.filter(type='user_created').count()
+
+    # Recent activities
+    recent_activity = []
+
+    # Attendance: Checked-in
+    for att in checked_in_att:
+        recent_activity.append({
+            'title': 'Checked In',
+            'description': f"{att.user.profile.first_name} {att.user.profile.last_name} checked in at {att.check_in_time.strftime('%H:%M')}",
+            'time': att.check_in_time.strftime("%H:%M"),
+            'user_id': att.user.id,
+            'icon': 'fa-sign-in-alt',
+            'color': 'var(--success)',
+        })
+
+    # Attendance: Checked-out
+    checked_out_att = Attendance.objects.filter(date=today, check_out_time__isnull=False).select_related('user')
+    for att in checked_out_att:
+        recent_activity.append({
+            'title': 'Checked Out',
+            'description': f"{att.user.profile.first_name} {att.user.profile.last_name} checked out at {att.check_out_time.strftime('%H:%M')}",
+            'time': att.check_out_time.strftime("%H:%M"),
+            'user_id': att.user.id,
+            'icon': 'fa-sign-out-alt',
+            'color': 'var(--primary)',
+        })
+
+    # WorkPlan recent activities (last 5)
+    recent_workplans = WorkPlan.objects.order_by('-created_at')[:5]
+    for plan in recent_workplans:
+        recent_activity.append({
+            'title': 'WorkPlan Created' if plan.type=='user_created' else 'Admin WorkPlan Created',
+            'description': f"{plan.created_by.profile.first_name} {plan.created_by.profile.last_name} created workplan for {plan.date.strftime('%d-%b-%Y')}",
+            'time': plan.created_at.strftime("%H:%M"),
+            'user_id': plan.created_by.id,
+            'icon': 'fa-tasks',
+            'color': 'var(--warning)' if plan.type=='user_created' else 'var(--info)',
+        })
+
+    # Sort by time descending
+    recent_activity = sorted(recent_activity, key=lambda x: x['time'], reverse=True)
+
+    context = {
+        'total_users': total_users,
+        'checked_in_count': checked_in_count,
+        'not_checked_in_count': not_checked_in_count,
+        'admin_workplans_count': admin_workplans_count,
+        'user_workplans_count': user_workplans_count,
+        'recent_activity': recent_activity,
+    }
+    return render(request, 'dashboard.html', context)
+
+
+
+
+
+
+@superuser_required
+def user_list_view(request):
+    filter_type = request.GET.get('filter', 'all')  # default 'all'
+
+    users = User.objects.all().order_by('-date_joined')
+
+    if filter_type == 'pending':
+        users = users.filter(is_active=False, is_superuser=False)
+    elif filter_type == 'approved':
+        users = users.filter(is_active=True, is_superuser=False)
+    elif filter_type == 'admins':
+        users = users.filter(is_superuser=True)
+
+    total_users = User.objects.exclude(is_superuser=True).count()
+    approved_users = User.objects.filter(is_active=True, is_superuser=False).count()
+    pending_users = User.objects.filter(is_active=False, is_superuser=False).count()
+    super_users = User.objects.filter(is_superuser=True).count()
+
+    context = {
+        'users': users,
+        'total_users': total_users,
+        'approved_users': approved_users,
+        'pending_users': pending_users,
+        'super_users': super_users,
+        'active_filter': filter_type,
+    }
+    return render(request, 'user_list.html', context)
+
+
+
+@superuser_required
+def approve_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user.is_active = True
+    user.save()
+    messages.success(request, f"{user.username} has been approved successfully.")
+    return redirect('user_list')
+
+@superuser_required
+def edit_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.method == "POST":
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        user.username = username
+        user.email = email
+        user.save()
+        messages.success(request, f"{user.username} has been updated successfully.")
+        return redirect('user_list')
+    return render(request, 'edit_user.html', {'user': user})
+
+@superuser_required
+def delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.method == "POST":
+        user.delete()
+        messages.success(request, "User deleted successfully.")
+        return redirect('user_list')
+    return render(request, 'delete_user.html', {'user': user})
+
+
+
+# views.py
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.models import User
+
+@superuser_required
+def user_detail_view(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    profile = getattr(user, 'profile', None)  # Check if profile exists
+    context = {
+        'user_obj': user,
+        'profile': profile,
+    }
+    return render(request, 'user_detail.html', context)
+
+@superuser_required
+def edit_user_profile(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    profile = getattr(user, 'profile', None)
+    
+    if request.method == 'POST':
+        user.username = request.POST.get('username')
+        user.email = request.POST.get('email')
+        if profile:
+            profile.first_name = request.POST.get('first_name')
+            profile.last_name = request.POST.get('last_name')
+            profile.designation = request.POST.get('designation')
+            profile.department = request.POST.get('department')
+            profile.mobile_number = request.POST.get('mobile_number')
+            profile.gender = request.POST.get('gender')
+            profile.marital_status = request.POST.get('marital_status')
+            profile.aadhaar_number = request.POST.get('aadhaar_number')
+            profile.pan_number = request.POST.get('pan_number')
+            profile.locality = request.POST.get('locality')
+            profile.city = request.POST.get('city')
+            profile.state = request.POST.get('state')
+            profile.pincode = request.POST.get('pincode')
+            profile.save()
+        user.save()
+        return redirect('user_detail', user_id=user.id)
+
+    context = {'user_obj': user, 'profile': profile}
+    return render(request, 'edit_user_profile.html', context)
+
+@superuser_required
+def delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user.delete()
+    return redirect('user_list')
+
+
+
+from attendance.models import Attendance
+
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from datetime import date, timedelta
+
+from datetime import date, datetime, timedelta
+import calendar
+from django.shortcuts import render
+from django.contrib.auth.models import User
+
+def monthly_attendance(request):
+    today = date.today()
+    month = int(request.GET.get('month', today.month))
+    year = int(request.GET.get('year', today.year))
+
+    # Get total days in selected month
+    total_days = calendar.monthrange(year, month)[1]
+    start_date = date(year, month, 1)
+    end_date = date(year, month, total_days)
+
+    users = User.objects.exclude(is_superuser=True).order_by('username')
+    attendance_data = []
+
+    for user in users:
+        row = {'user': user, 'days': []}
+
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+            attendance = Attendance.objects.filter(user=user, date=current_date).first()
+
+            if attendance:
+                # ✅ Mark Present
+                row['days'].append('P')
+            else:
+                if current_date > today:
+                    # ⏳ Future Date → Not yet completed
+                    row['days'].append('-')
+                else:
+                    # ❌ Past Date but no record → Absent
+                    row['days'].append('A')
+
+        attendance_data.append(row)
+
+    context = {
+        'attendance_data': attendance_data,
+        'month': month,
+        'year': year,
+        'days_in_month': range(1, total_days + 1),
+    }
+    return render(request, 'attendance/monthly_attendance.html', context)
+
+
+from django.shortcuts import render
+from datetime import date
+from geopy.geocoders import Nominatim
+
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from datetime import date
+from attendance.models import Attendance
+from geopy.geocoders import Nominatim
+
+def daily_attendance_dashboard(request):
+    today = date.today()
+    users = User.objects.exclude(is_superuser=True).order_by('username')
+
+    total_employees = users.count()
+    present_count = 0
+    absent_count = 0
+
+    geolocator = Nominatim(user_agent="attendance_app")  # geopy
+
+    data = []
+    for user in users:
+        attendance = Attendance.objects.filter(user=user, date=today).first()
+
+        if attendance and attendance.check_in_time:
+            status = 'Present'
+            present_count += 1
+        else:
+            status = 'Absent'
+            absent_count += 1
+
+        # Reverse geocode check-in
+        if attendance and attendance.check_in_latitude and attendance.check_in_longitude:
+            try:
+                location_in = geolocator.reverse(
+                    f"{attendance.check_in_latitude},{attendance.check_in_longitude}", timeout=10
+                )
+                check_in_address = location_in.address if location_in else '-'
+            except:
+                check_in_address = '-'
+        else:
+            check_in_address = '-'
+
+        # Reverse geocode check-out
+        if attendance and attendance.check_out_latitude and attendance.check_out_longitude:
+            try:
+                location_out = geolocator.reverse(
+                    f"{attendance.check_out_latitude},{attendance.check_out_longitude}", timeout=10
+                )
+                check_out_address = location_out.address if location_out else '-'
+            except:
+                check_out_address = '-'
+        else:
+            check_out_address = '-'
+
+        data.append({
+            'user': user,
+            'status': status,
+            'check_in': attendance.check_in_time.strftime("%H:%M:%S") if attendance and attendance.check_in_time else '-',
+            'check_in_loc': check_in_address,
+            'check_out': attendance.check_out_time.strftime("%H:%M:%S") if attendance and attendance.check_out_time else '-',
+            'check_out_loc': check_out_address,
+        })
+
+    context = {
+        'today': today,
+        'total_employees': total_employees,
+        'present_count': present_count,
+        'absent_count': absent_count,
+        'data': data,
+    }
+    return render(request, 'attendance/daily_attendance_dashboard.html', context)
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
+from attendance.models import WorkPlanTitle
+from .forms import WorkPlanTitleForm
+
+def is_superuser(user):
+    return user.is_superuser
+
+# ---------------------------
+# WorkPlanTitle CRUD (Admin only)
+# ---------------------------
+
+@user_passes_test(is_superuser)
+def workplantitle_list(request):
+    titles = WorkPlanTitle.objects.all().order_by('title')
+    return render(request, 'workplan/workplantitle_list.html', {'titles': titles})
+
+@user_passes_test(is_superuser)
+def workplantitle_create(request):
+    if request.method == 'POST':
+        form = WorkPlanTitleForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "WorkPlan Title created successfully!")
+            return redirect('workplantitle_list')
+    else:
+        form = WorkPlanTitleForm()
+    return render(request, 'workplan/workplantitle_create.html', {'form': form})
+
+@user_passes_test(is_superuser)
+def workplantitle_edit(request, pk):
+    title = get_object_or_404(WorkPlanTitle, pk=pk)
+    if request.method == 'POST':
+        form = WorkPlanTitleForm(request.POST, instance=title)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "WorkPlan Title updated successfully!")
+            return redirect('workplantitle_list')
+    else:
+        form = WorkPlanTitleForm(instance=title)
+    return render(request, 'workplan/workplantitle_edit.html', {'form': form, 'title': title})
+
+@user_passes_test(is_superuser)
+def workplantitle_delete(request, pk):
+    title = get_object_or_404(WorkPlanTitle, pk=pk)
+    title.delete()
+    messages.success(request, "WorkPlan Title deleted successfully!")
+    return redirect('workplantitle_list')
+
+
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from attendance.models import WorkPlan
+from .forms import WorkPlanForm
+
+def is_superuser(user):
+    return user.is_superuser
+
+# ---------------------------
+# ADMIN CRUD
+# ---------------------------
+
+@user_passes_test(is_superuser)
+def admin_workplan_list(request):
+    workplans = WorkPlan.objects.filter(type='admin_created').order_by('-date')
+    return render(request, 'workplan/admin_workplan_list.html', {'workplans': workplans})
+
+@user_passes_test(is_superuser)
+def admin_workplan_create(request):
+    if request.method == 'POST':
+        form = WorkPlanForm(request.POST)
+        if form.is_valid():
+            plan = form.save(commit=False)
+            plan.created_by = request.user
+            plan.type = 'admin_created'
+            plan.save()
+            form.save_m2m()
+            messages.success(request, "Admin work plan created successfully!")
+            return redirect('admin_workplan_list')
+    else:
+        form = WorkPlanForm()
+    return render(request, 'workplan/admin_workplan_create.html', {'form': form})
+
+@user_passes_test(is_superuser)
+def admin_workplan_edit(request, pk):
+    plan = get_object_or_404(WorkPlan, pk=pk, type='admin_created')
+    form = WorkPlanForm(request.POST or None, instance=plan)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Work plan updated successfully!")
+        return redirect('admin_workplan_list')
+    return render(request, 'workplan/admin_workplan_edit.html', {'form': form, 'plan': plan})
+
+@user_passes_test(is_superuser)
+def admin_workplan_delete(request, pk):
+    plan = get_object_or_404(WorkPlan, pk=pk, type='admin_created')
+    plan.delete()
+    messages.success(request, "Work plan deleted successfully!")
+    return redirect('admin_workplan_list')
+
+
+# ---------------------------
+# USER CRUD
+# ---------------------------
+
+@login_required
+def user_workplan_list(request):
+    workplans = WorkPlan.objects.filter(created_by=request.user, type='user_created').order_by('-date')
+    return render(request, 'workplan/user_workplan_list.html', {'workplans': workplans})
+
+@login_required
+def user_workplan_create(request):
+    if request.method == 'POST':
+        form = WorkPlanForm(request.POST)
+        if form.is_valid():
+            plan = form.save(commit=False)
+            plan.created_by = request.user
+            plan.type = 'user_created'
+            plan.save()
+            form.save_m2m()
+            messages.success(request, "Work plan created successfully!")
+            return redirect('user_workplan_list')
+    else:
+        form = WorkPlanForm()
+    return render(request, 'workplan/user_workplan_create.html', {'form': form})
+
+@login_required
+def user_workplan_edit(request, pk):
+    plan = get_object_or_404(WorkPlan, pk=pk, created_by=request.user)
+    form = WorkPlanForm(request.POST or None, instance=plan)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Work plan updated successfully!")
+        return redirect('user_workplan_list')
+    return render(request, 'workplan/user_workplan_edit.html', {'form': form, 'plan': plan})
+
+@login_required
+def user_workplan_delete(request, pk):
+    plan = get_object_or_404(WorkPlan, pk=pk, created_by=request.user)
+    plan.delete()
+    messages.success(request, "Work plan deleted successfully!")
+    return redirect('user_workplan_list')
+
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def workplan_dashboard(request):
+    """
+    Work Plan Dashboard view.
+    Shows buttons for Admin and User work plans.
+    """
+    return render(request, 'workplan/workplan_dashboard.html')
+
+
 

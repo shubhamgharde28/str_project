@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:1200px; margin:30px auto;">
+
+    <h2 style="text-align:center;">🎯 Target & Sales Dashboard ({{ year }})</h2>
+
+
+
+    <!-- STAT CARDS -->
+    <!-- STAT CARDS -->
+    <div style="display:grid; gap:20px; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); margin-bottom:30px;">
+        <div style="background:#007bff; color:#fff; padding:18px; border-radius:10px;">
+            <div>Total Targets</div>
+            <div style="font-size:28px;font-weight:700;">{{ total_targets }}</div>
+            <a href="{% url 'target-list' %}" style="color:#fff;text-decoration:underline;">View All Targets</a>
+        </div>
+        <div style="background:#28a745; color:#fff; padding:18px; border-radius:10px;">
+            <div>Total Sales</div>
+            <div style="font-size:28px;font-weight:700;">{{ total_sales }}</div>
+            <a href="{% url 'sale-list' %}" style="color:#fff;text-decoration:underline;">View All Sales</a>
+        </div>
+        <div style="background:#ffc107; color:#000; padding:18px; border-radius:10px;">
+            <div>Total Employees</div>
+            <div style="font-size:28px;font-weight:700;">{{ total_users }}</div>
+            <a href="{% url 'user_list' %}" style="color:#000;text-decoration:underline;">View All Users</a>
+        </div>
+        <div style="background:#6c757d; color:#fff; padding:18px; border-radius:10px;">
+            <div>Progress</div>
+            <div style="font-size:28px;font-weight:700;">{{ progress_percent }}%</div>
+            <div>{{ total_sold_area }} / {{ total_target_area }}</div>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div style="display:flex; gap:12px; justify-content:center; margin-bottom:30px;">
+        <a href="{% url 'target-create' %}" style="background:#007bff;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">➕ Add Target</a>
+        <a href="{% url 'sale-create' %}" style="background:#28a745;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">➕ Add Sale</a>
+    </div>
+ <form method="get" style="text-align:center; margin-bottom:20px;">
+        <label>Year:</label>
+        <input type="number" name="year" value="{{ year }}" min="2000" max="2100">
+
+        <label>Month:</label>
+        <select name="month">
+            <option value="">All</option>
+            {% for m, name in MONTH_CHOICES %}
+            <option value="{{ m }}" {% if month == m %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+    <!-- PER-USER MONTHLY STATUS -->
+    {% for u_status in users_status %}
+    <h3>{{ u_status.user.username }} - Monthly Target Status</h3>
+    <table style="border-collapse:collapse; width:100%; margin-bottom:20px;">
+        <tr style="background:#333; color:#fff;">
+            <th>Month</th>
+            <th>Target (sq ft)</th>
+            <th>Sold (sq ft)</th>
+            <th>Status</th>
+            <th>Carry Forward</th>
+        </tr>
+        {% for month in u_status.monthly_status %}
+        <tr style="background-color:{% if month.status == 'green' %}#c6f5c6{% else %}#f5c6c6{% endif %}; text-align:center;">
+            <td>{{ month.month }}</td>
+            <td>{{ month.target_area }}</td>
+            <td>{{ month.sold_area }}</td>
+            <td>{{ month.status|title }}</td>
+            <td>{{ month.carry_forward }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endfor %}
+
+</div>
+{% endblock %}

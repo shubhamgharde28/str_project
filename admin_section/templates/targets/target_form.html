@@ -1,3 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+
 <h2>{{ title }}</h2>
 <form method="post">
     {% csrf_token %}
@@ -5,3 +8,6 @@
     <button type="submit">Submit</button>
 </form>
 <a href="{% url 'sale-list' %}">Back</a>
+
+
+{% endblock %}

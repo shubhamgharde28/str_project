@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{% if title %}Edit{% else %}Create{% endif %} WorkPlan Title</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">{% if title %}Update{% else %}Create{% endif %}</button>
+</form>
+{% endblock %}

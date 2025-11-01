@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>My Work Plans</h2>
+  <a href="{% url 'user_workplan_create' %}" class="btn btn-success mb-3">+ Create Work Plan</a>
+
+  {% if workplans %}
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Titles</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for plan in workplans %}
+      <tr>
+        <td>{% for t in plan.titles.all %}{{ t.title }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        <td>{{ plan.description|default:"—" }}</td>
+        <td>{{ plan.get_status_display }}</td>
+        <td>{{ plan.date }}</td>
+        <td>
+          <a href="{% url 'user_workplan_edit' plan.id %}" class="btn btn-sm btn-primary">Edit</a>
+          <a href="{% url 'user_workplan_delete' plan.id %}" class="btn btn-sm btn-danger"
+             onclick="return confirm('Are you sure to delete this?')">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No work plans yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

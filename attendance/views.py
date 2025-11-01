@@ -475,3 +475,5 @@ class PendingHourlyReportCheckView(APIView):
         if not exists:
             return Response({"pending": True, "message": f"Your hourly report for {current_hour}:00 is pending!"})
         return Response({"pending": False, "message": "All reports submitted for this hour."})
+
+

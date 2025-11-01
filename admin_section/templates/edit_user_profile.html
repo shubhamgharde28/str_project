@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container" style="max-width:700px;">
+    <h2>Edit User</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        <label>Username:</label>
+        <input type="text" name="username" value="{{ user_obj.username }}" required><br>
+
+        <label>Email:</label>
+        <input type="email" name="email" value="{{ user_obj.email }}" required><br>
+
+        {% if profile %}
+        <label>First Name:</label>
+        <input type="text" name="first_name" value="{{ profile.first_name }}"><br>
+
+        <label>Last Name:</label>
+        <input type="text" name="last_name" value="{{ profile.last_name }}"><br>
+
+        <label>Designation:</label>
+        <input type="text" name="designation" value="{{ profile.designation }}"><br>
+
+        <label>Department:</label>
+        <input type="text" name="department" value="{{ profile.department }}"><br>
+
+        <label>Mobile:</label>
+        <input type="text" name="mobile_number" value="{{ profile.mobile_number }}"><br>
+
+        <label>Date of Birth:</label>
+        <input type="date" name="date_of_birth" value="{{ profile.date_of_birth }}"><br>
+
+        <label>Gender:</label>
+        <select name="gender">
+            <option value="male" {% if profile.gender == "male" %}selected{% endif %}>Male</option>
+            <option value="female" {% if profile.gender == "female" %}selected{% endif %}>Female</option>
+            <option value="other" {% if profile.gender == "other" %}selected{% endif %}>Other</option>
+        </select><br>
+
+        <label>Marital Status:</label>
+        <select name="marital_status">
+            <option value="single" {% if profile.marital_status == "single" %}selected{% endif %}>Single</option>
+            <option value="married" {% if profile.marital_status == "married" %}selected{% endif %}>Married</option>
+            <option value="divorced" {% if profile.marital_status == "divorced" %}selected{% endif %}>Divorced</option>
+            <option value="widowed" {% if profile.marital_status == "widowed" %}selected{% endif %}>Widowed</option>
+        </select><br>
+
+        <label>Aadhaar:</label>
+        <input type="text" name="aadhaar_number" value="{{ profile.aadhaar_number }}"><br>
+
+        <label>PAN:</label>
+        <input type="text" name="pan_number" value="{{ profile.pan_number }}"><br>
+
+        <label>Locality:</label>
+        <input type="text" name="locality" value="{{ profile.locality }}"><br>
+
+        <label>City:</label>
+        <input type="text" name="city" value="{{ profile.city }}"><br>
+
+        <label>State:</label>
+        <input type="text" name="state" value="{{ profile.state }}"><br>
+
+        <label>Pincode:</label>
+        <input type="text" name="pincode" value="{{ profile.pincode }}"><br>
+        {% endif %}
+
+        <button type="submit" class="approve-btn" style="background:#28a745; margin-top:10px;">Save</button>
+    </form>
+</div>
+{% endblock %}

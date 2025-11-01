@@ -1,3 +1,5 @@
+{% extends 'base.html' %}
+{% block content %}
 <h2>Sales</h2>
 <a href="{% url 'sale-create' %}">Create Sale</a>
 <table border="1" cellpadding="5">
@@ -19,3 +21,6 @@
     </tr>
     {% endfor %}
 </table>
+
+
+{% endblock %}

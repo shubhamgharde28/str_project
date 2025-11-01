@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>WorkPlan Titles</h2>
+<a href="{% url 'workplantitle_create' %}" class="btn btn-primary mb-3">➕ Add Title</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in titles %}
+        <tr>
+            <td>{{ t.title }}</td>
+            <td>{{ t.description }}</td>
+            <td>
+                <a href="{% url 'workplantitle_edit' t.id %}" class="btn btn-sm btn-warning">Edit</a>
+                <a href="{% url 'workplantitle_delete' t.id %}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3" class="text-center">No titles found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

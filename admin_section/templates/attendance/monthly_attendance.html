@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block content %}
+    <title>Monthly Attendance</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f9f9f9; }
+        h2 { text-align: center; }
+        table { border-collapse: collapse; width: 100%; background: #fff; }
+        th, td { border: 1px solid #ccc; text-align: center; padding: 6px; }
+        th { background: #007bff; color: white; position: sticky; top: 0; }
+        tr:nth-child(even) { background: #f2f2f2; }
+        .P { background: #d4edda; color: #155724; }
+        .A { background: #f8d7da; color: #721c24; }
+        .dash { background: #e2e3e5; color: #6c757d; }
+        .filters { text-align: center; margin-bottom: 20px; }
+    </style>
+
+    <h2>📅 Monthly Attendance - {{ month }}/{{ year }}</h2>
+
+    <div class="filters">
+        <form method="get">
+            <label>Month:</label>
+            <select name="month">
+                {% for i in 1|to:12 %}
+                    <option value="{{ i }}" {% if i == month %}selected{% endif %}>{{ i }}</option>
+                {% endfor %}
+            </select>
+            <label>Year:</label>
+            <select name="year">
+                {% for y in 2020|to:2030 %}
+                    <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Filter</button>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Employee</th>
+                {% for day in days_in_month %}
+                    <th>{{ day }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in attendance_data %}
+            <tr>
+                <td>
+    {% if row.user.profile %}
+        {{ row.user.profile.first_name }} {{ row.user.profile.last_name }}
+    {% else %}
+        {{ row.user.username }}
+    {% endif %}
+</td>
+
+                {% for status in row.days %}
+                    <td class="{% if status == 'P' %}P{% elif status == 'A' %}A{% else %}dash{% endif %}">{{ status }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+

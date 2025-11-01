@@ -35,3 +35,36 @@ class SaleForm(forms.ModelForm):
         self.fields['year'] = forms.ChoiceField(choices=year_choices)
 
 
+
+
+
+from django import forms
+from attendance.models import WorkPlanTitle
+
+class WorkPlanTitleForm(forms.ModelForm):
+    class Meta:
+        model = WorkPlanTitle
+        fields = ['title', 'description']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Title'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Description'}),
+        }
+
+from django import forms
+from django.contrib.auth.models import User
+from attendance.models import WorkPlan, WorkPlanTitle
+
+class WorkPlanForm(forms.ModelForm):
+    coworkers = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(is_superuser=False),
+        required=False,
+        widget=forms.CheckboxSelectMultiple
+    )
+    titles = forms.ModelMultipleChoiceField(
+        queryset=WorkPlanTitle.objects.all(),
+        widget=forms.CheckboxSelectMultiple
+    )
+
+    class Meta:
+        model = WorkPlan
+        fields = ['titles', 'description', 'coworkers', 'status', 'date']

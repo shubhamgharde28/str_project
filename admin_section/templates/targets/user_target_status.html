@@ -1,6 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends 'base.html' %}
+{% block content %}
     <title>{{ user.username }} - Target Status</title>
     <style>
         table {
@@ -24,8 +23,7 @@
             background-color: #f5c6c6;
         }
     </style>
-</head>
-<body>
+
     <h2 style="text-align: center;">{{ user.username }} - Yearly Target Status</h2>
     <table>
         <tr>
@@ -46,5 +44,5 @@
 
         {% endfor %}
     </table>
-</body>
-</html>
+
+{% endblock %}

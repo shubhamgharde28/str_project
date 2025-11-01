@@ -1,3 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+
 <h2>Delete Sale?</h2>
 <p>Are you sure you want to delete {{ sale.user.email }} - {{ sale.date }}?</p>
 <form method="post">
@@ -5,3 +8,4 @@
     <button type="submit">Yes, Delete</button>
 </form>
 <a href="{% url 'sale-list' %}">Cancel</a>
+{% endblock %}

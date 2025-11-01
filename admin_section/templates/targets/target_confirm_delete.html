@@ -1,3 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+
 <h2>Delete Target?</h2>
 <p>Are you sure you want to delete {{ target.user.email }} - {{ target.get_month_display }}?</p>
 <form method="post">
@@ -5,3 +8,6 @@
     <button type="submit">Yes, Delete</button>
 </form>
 <a href="{% url 'target-list' %}">Cancel</a>
+
+
+{% endblock %}

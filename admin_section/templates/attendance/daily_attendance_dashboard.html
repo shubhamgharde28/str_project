@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container" style="max-width:1200px; margin:30px auto;">
+
+    <h2 style="text-align:center; margin-bottom:20px;">📅 Daily Attendance Dashboard - {{ today }}</h2>
+
+    <!-- STAT CARDS -->
+    <div style="display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); margin-bottom:30px;">
+        <div style="background:#007bff;color:#fff;padding:18px;border-radius:10px;">
+            <div>Total Employees</div>
+            <div style="font-size:28px;font-weight:700;">{{ total_employees }}</div>
+        </div>
+        <div style="background:#28a745;color:#fff;padding:18px;border-radius:10px;">
+            <div>Present Today</div>
+            <div style="font-size:28px;font-weight:700;">{{ present_count }}</div>
+        </div>
+        <div style="background:#dc3545;color:#fff;padding:18px;border-radius:10px;">
+            <div>Absent Today</div>
+            <div style="font-size:28px;font-weight:700;">{{ absent_count }}</div>
+        </div>
+        <div style="background:#ffc107;color:#000;padding:18px;border-radius:10px;">
+            <div>Monthly Data</div>
+            <a href="{% url 'monthly_attendance' %}" style="color:#000; text-decoration:underline;">View Monthly Attendance</a>
+        </div>
+    </div>
+
+    <!-- DETAILED ATTENDANCE TABLE -->
+    <table style="width:100%; border-collapse:collapse; border:1px solid #ccc;">
+        <thead style="background:#333;color:#fff;">
+            <tr>
+                <th style="padding:10px;">Employee</th>
+                <th style="padding:10px;">Status</th>
+                <th style="padding:10px;">Check-In Time</th>
+                <th style="padding:10px;">Check-In Location</th>
+                <th style="padding:10px;">Check-Out Time</th>
+                <th style="padding:10px;">Check-Out Location</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr style="text-align:center; {% if row.status == 'Absent' %}background:#f8d7da{% else %}background:#d4edda{% endif %};">
+                <td>{{ row.user.profile.first_name }} {{ row.user.profile.last_name }}</td>
+                <td>{{ row.status }}</td>
+                <td>{{ row.check_in }}</td>
+                <td>
+                    {% if row.check_in_loc != '-' %}
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ row.check_in_loc|urlencode }}" target="_blank">
+                            {{ row.check_in_loc }}
+                        </a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ row.check_out }}</td>
+                <td>
+                    {% if row.check_out_loc != '-' %}
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ row.check_out_loc|urlencode }}" target="_blank">
+                            {{ row.check_out_loc }}
+                        </a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align:center; padding:15px;">No attendance records found for today.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}
