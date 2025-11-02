@@ -68,7 +68,66 @@ class AttendanceAdmin(admin.ModelAdmin):
     
 
 from django.contrib import admin
-from .models import WorkPlan, WorkPlanTitle
+from .models import WorkPlan, WorkPlanTitle, Project
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'project_type',
+        'city',
+        'state',
+        'total_plots',
+        'sold_plots',
+        'remaining_plots',
+        'is_active',
+        'created_at'
+    )
+    list_filter = ('project_type', 'city', 'state', 'is_active')
+    search_fields = ('name', 'city', 'state')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-created_at',)
+    fieldsets = (
+        ('Project Information', {
+            'fields': (
+                'name',
+                'project_type',
+                'description',
+                'created_by'
+            )
+        }),
+        ('Plot Details', {
+            'fields': (
+                'total_plots',
+                'sold_plots',
+                'available_plots'
+            )
+        }),
+        ('Location Information', {
+            'fields': (
+                'address',
+                'city',
+                'state',
+                'pincode'
+            )
+        }),
+        ('Timeline', {
+            'fields': (
+                'launch_date',
+                'expected_completion_date'
+            )
+        }),
+        ('Status & Timestamps', {
+            'fields': (
+                'is_active',
+                'created_at',
+                'updated_at'
+            )
+        }),
+    )
+
+
 
 @admin.register(WorkPlanTitle)
 class WorkPlanTitleAdmin(admin.ModelAdmin):
@@ -122,6 +181,7 @@ class WorkTypeOptionAdmin(admin.ModelAdmin):
 
 @admin.register(WorkDetail)
 class WorkDetailAdmin(admin.ModelAdmin):
-    list_display = ['hourly_report', 'work_type_option', 'customer_name', 'customer_response']
-    list_filter = ['customer_response', 'work_type_option']
-    search_fields = ['customer_name', 'project_name', 'mobile_number']
+    list_display = ('hourly_report', 'project', 'work_type_option', 'customer_name', 'customer_response', 'next_followup_date')
+    list_filter = ('project', 'customer_response',)
+    search_fields = ('customer_name', 'mobile_number', 'project__name')
+

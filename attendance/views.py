@@ -399,44 +399,63 @@ from datetime import timedelta
 from .models import WorkPlan
 from .serializers import WorkPlanSerializer
 from collections import defaultdict
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import permissions
+from django.db.models import Q
+from datetime import timedelta
+from collections import defaultdict
+from django.utils import timezone
+from .models import WorkPlan
+from .serializers import WorkPlanSerializer
+
 
 class UserWorkPlanAllView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         user = request.user
+        today = timezone.localdate()
+        filter_type = request.query_params.get("filter")  # daily, weekly, monthly
 
-        # Get all user-created + shared plans
-        queryset = WorkPlan.objects.filter(type='user_created').filter(
-            Q(created_by=user) | Q(coworkers=user)
+        # Fetch both user-created and admin-created plans
+        queryset = WorkPlan.objects.filter(
+            Q(created_by=user) | Q(coworkers=user) | Q(type='admin_created')
         ).order_by('date')
 
+        # Apply date-based filter
+        if filter_type == 'daily':
+            queryset = queryset.filter(date=today)
+
+        elif filter_type == 'weekly':
+            start_of_week = today - timedelta(days=today.weekday())
+            end_of_week = start_of_week + timedelta(days=6)
+            queryset = queryset.filter(date__range=[start_of_week, end_of_week])
+
+        elif filter_type == 'monthly':
+            queryset = queryset.filter(date__year=today.year, date__month=today.month)
+
+        # Group results by workplan type (user/admin)
         grouped_data = {
-            "daily": defaultdict(list),
-            "weekly": defaultdict(list),
-            "monthly": defaultdict(list)
+            "user_created": [],
+            "admin_created": []
         }
 
         for wp in queryset:
-            # --- Daily ---
-            grouped_data["daily"][str(wp.date)].append(WorkPlanSerializer(wp).data)
+            wp_data = WorkPlanSerializer(wp).data
+            if wp.type == 'admin_created':
+                grouped_data["admin_created"].append(wp_data)
+            else:
+                grouped_data["user_created"].append(wp_data)
 
-            # --- Weekly ---
-            start_of_week = wp.date - timedelta(days=wp.date.weekday())
-            end_of_week = start_of_week + timedelta(days=6)
-            week_key = f"{start_of_week}_to_{end_of_week}"
-            grouped_data["weekly"][week_key].append(WorkPlanSerializer(wp).data)
+        return Response({
+            "filter_type": filter_type or "all",
+            "total_count": queryset.count(),
+            "data": grouped_data
+        })
 
-            # --- Monthly ---
-            month_key = wp.date.strftime("%Y-%m")
-            grouped_data["monthly"][month_key].append(WorkPlanSerializer(wp).data)
 
-        # Convert defaultdict to normal dict for JSON
-        grouped_data["daily"] = dict(grouped_data["daily"])
-        grouped_data["weekly"] = dict(grouped_data["weekly"])
-        grouped_data["monthly"] = dict(grouped_data["monthly"])
-
-        return Response(grouped_data)
+    
 
 from rest_framework import generics, permissions
 from rest_framework.views import APIView

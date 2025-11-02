@@ -201,14 +201,18 @@ class WorkTypeSerializer(serializers.ModelSerializer):
 
 from rest_framework import serializers
 from .models import WorkDetail, WorkTypeOption
+from rest_framework import serializers
+from .models import WorkDetail, WorkTypeOption, Project
+
 
 class WorkDetailSerializer(serializers.ModelSerializer):
     work_type_option = serializers.PrimaryKeyRelatedField(queryset=WorkTypeOption.objects.all())
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all(), allow_null=True, required=False)
 
     class Meta:
         model = WorkDetail
-        # Exclude hourly_report from input, will assign it in create()
         exclude = ['hourly_report']
+
 
 
 class HourlyReportSerializer(serializers.ModelSerializer):
@@ -223,30 +227,50 @@ class HourlyReportSerializer(serializers.ModelSerializer):
 from rest_framework import serializers
 from .models import HourlyReport, WorkDetail, WorkType, WorkTypeOption
 
+from rest_framework import serializers
+from .models import HourlyReport, WorkDetail, WorkType, WorkTypeOption
+
 class HourlyReportCreateSerializer(serializers.ModelSerializer):
-    work_types = serializers.PrimaryKeyRelatedField(queryset=WorkType.objects.all(), many=True)
-    work_type_options = serializers.PrimaryKeyRelatedField(queryset=WorkTypeOption.objects.all(), many=True)
+    work_types = serializers.PrimaryKeyRelatedField(queryset=WorkType.objects.all())
+    work_type_options = serializers.PrimaryKeyRelatedField(queryset=WorkTypeOption.objects.all())
     details = WorkDetailSerializer(many=True)
 
     class Meta:
         model = HourlyReport
-        fields = ['report_date', 'report_hour', 'location_latitude', 'location_longitude',
-                  'work_done', 'reason_not_done', 'work_types', 'work_type_options', 'details']
+        fields = [
+            'report_date',
+            'report_hour',
+            'location_latitude',
+            'location_longitude',
+            'work_done',
+            'reason_not_done',
+            'work_types',
+            'work_type_options',
+            'details',
+        ]
 
     def create(self, validated_data):
         details_data = validated_data.pop('details')
-        work_types_data = validated_data.pop('work_types', [])
-        work_type_options_data = validated_data.pop('work_type_options', [])
+        work_type = validated_data.pop('work_types')
+        work_type_option = validated_data.pop('work_type_options')
 
-        # Create HourlyReport instance
+        # Create main HourlyReport entry
         report = HourlyReport.objects.create(user=self.context['request'].user, **validated_data)
-        report.work_types.set(work_types_data)
-        report.work_type_options.set(work_type_options_data)
 
-        # Create WorkDetail instances and link to HourlyReport
+        # Assign single selections as ManyToMany
+        report.work_types.set([work_type])
+        report.work_type_options.set([work_type_option])
+
+        # Create linked WorkDetail entries
         for detail_data in details_data:
             WorkDetail.objects.create(hourly_report=report, **detail_data)
 
         return report
+
+    # ✅ Ensure the response is JSON serializable
+    def to_representation(self, instance):
+        from .serializers import HourlyReportSerializer
+        return HourlyReportSerializer(instance, context=self.context).data
+
 
 
