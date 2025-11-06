@@ -161,6 +161,15 @@ from .serializers import UserProfileSerializer
 class CompleteProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        # Fetch profile
+        if not hasattr(request.user, 'profile'):
+            return Response({"error": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        profile = request.user.profile
+        serializer = UserProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def post(self, request):
         # Check if profile already exists
         if hasattr(request.user, 'profile'):
@@ -183,6 +192,8 @@ class CompleteProfileView(APIView):
             serializer.save()
             return Response({"message": "Profile updated successfully."})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 from rest_framework.views import APIView
@@ -318,6 +329,97 @@ class AttendanceCheckOutView(APIView):
             {"message": "Successfully checked out.", "attendance": serializer.data},
             status=status.HTTP_200_OK
         )
+
+
+from datetime import date
+from calendar import monthrange
+from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
+class MonthlyAttendanceSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        
+        # Current date details
+        today = timezone.localdate()
+        month = today.month
+        year = today.year
+
+        # Total days in current month (auto)
+        total_days_in_month = monthrange(year, month)[1]
+
+        # Get user's attendance for current month
+        attendances = Attendance.objects.filter(
+            user=user,
+            date__year=year,
+            date__month=month
+        )
+
+        total_present_days = attendances.count()
+        total_absent_days = total_days_in_month - total_present_days
+
+        # Get today's attendance for last check-in/out
+        last_check_in_time = None
+        last_check_out_time = None
+        last_date = None
+
+        try:
+            today_record = Attendance.objects.get(user=user, date=today)
+            last_check_in_time = today_record.check_in_time
+            last_check_out_time = today_record.check_out_time
+            last_date = today_record.date
+        except Attendance.DoesNotExist:
+            pass
+
+        return Response({
+            "month": month,
+            "year": year,
+            "last_date": last_date,
+            "last_check_in_time": last_check_in_time,
+            "last_check_out_time": last_check_out_time,
+            "total_days_in_month": total_days_in_month,
+            "total_present_days": total_present_days,
+            "total_absent_days": total_absent_days
+        }, status=200)
+
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Sum
+
+class TargetSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Calculate total target (sum of target_area + carry_forward)
+        target_data = MonthlyTarget.objects.filter(user=user).aggregate(
+            total_target=Sum('target_area') + Sum('carry_forward')
+        )
+        total_target = target_data['total_target'] if target_data['total_target'] else 0
+
+        # Calculate total sale (sum of area_sold)
+        sale_data = Sale.objects.filter(user=user).aggregate(total_sale=Sum('area_sold'))
+        total_sale = sale_data['total_sale'] if sale_data['total_sale'] else 0
+
+        # Remaining
+        remaining_target = total_target - total_sale
+
+        return Response({
+            "total_target": total_target,
+            "total_sale": total_sale,
+            "remaining_target": remaining_target
+        }, status=200)
+
+
+
 
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response

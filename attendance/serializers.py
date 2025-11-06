@@ -124,6 +124,15 @@ from .models import WorkPlan, WorkPlanTitle
 from django.contrib.auth.models import User
 
 
+
+from rest_framework import serializers
+
+class TargetSummarySerializer(serializers.Serializer):
+    total_target = serializers.FloatField()
+    total_sale = serializers.FloatField()
+    remaining_target = serializers.FloatField()
+
+
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import WorkPlan, WorkPlanTitle

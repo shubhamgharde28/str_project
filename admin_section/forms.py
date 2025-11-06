@@ -54,17 +54,78 @@ from django import forms
 from django.contrib.auth.models import User
 from attendance.models import WorkPlan, WorkPlanTitle
 
+from django import forms
+from django.contrib.auth.models import User
+from attendance.models import WorkPlan, WorkPlanTitle
+
+
 class WorkPlanForm(forms.ModelForm):
     coworkers = forms.ModelMultipleChoiceField(
         queryset=User.objects.filter(is_superuser=False),
         required=False,
-        widget=forms.CheckboxSelectMultiple
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'})
     )
+
     titles = forms.ModelMultipleChoiceField(
         queryset=WorkPlanTitle.objects.all(),
-        widget=forms.CheckboxSelectMultiple
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'})
+    )
+
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        })
     )
 
     class Meta:
         model = WorkPlan
         fields = ['titles', 'description', 'coworkers', 'status', 'date']
+        widgets = {
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Enter work plan details...'
+            }),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+from django import forms
+from attendance.models import WorkType, WorkTypeOption, HourlyReport, WorkDetail
+
+class WorkTypeForm(forms.ModelForm):
+    class Meta:
+        model = WorkType
+        fields = ['name', 'description']
+
+class WorkTypeOptionForm(forms.ModelForm):
+    class Meta:
+        model = WorkTypeOption
+        fields = ['work_type', 'name', 'description']
+
+class HourlyReportForm(forms.ModelForm):
+    class Meta:
+        model = HourlyReport
+        fields = [
+            'report_date', 'report_hour', 'location_latitude', 'location_longitude',
+            'work_done', 'reason_not_done', 'work_types', 'work_type_options'
+        ]
+        widgets = {
+            'report_date': forms.DateInput(attrs={'type': 'date'}),
+            'reason_not_done': forms.Textarea(attrs={'rows': 2}),
+            'work_types': forms.CheckboxSelectMultiple(),
+            'work_type_options': forms.CheckboxSelectMultiple(),
+        }
+
+class WorkDetailForm(forms.ModelForm):
+    class Meta:
+        model = WorkDetail
+        fields = [
+            'hourly_report', 'project', 'work_type_option', 'customer_name',
+            'mobile_number', 'plot_number', 'customer_response', 'reason_not_interested',
+            'site_visit_done', 'meeting_done', 'booking_done', 'next_followup_date'
+        ]
+        widgets = {
+            'next_followup_date': forms.DateInput(attrs={'type': 'date'}),
+            'reason_not_interested': forms.Textarea(attrs={'rows': 2}),
+        }

@@ -140,6 +140,16 @@ REST_FRAMEWORK = {
     ),
 }
 
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # User stays logged in for 8 hours
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=15), # User can refresh token within 15 days
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
 
 # Email configuration (for testing)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

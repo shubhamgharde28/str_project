@@ -489,29 +489,53 @@
 </head>
 <body>
   <!-- Header -->
-  <header class="main-header">
-    <div class="logo">
-      <div class="logo-icon">
-        <i class="fas fa-cube"></i>
-      </div>
-      NexusCRM Pro
+<header class="main-header">
+  <div class="logo">
+    <div class="logo-icon">
+      <i class="fas fa-cube"></i>
     </div>
-    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
-      <i class="fas fa-bars"></i>
-    </button>
-    <nav class="header-nav" aria-label="Main navigation">
-      <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
-      <a href="#"><i class="fas fa-bell"></i> Notifications</a>
-      <a href="#"><i class="fas fa-cog"></i> Settings</a>
-      <div class="user-profile">
-        <div class="user-avatar">JD</div>
-        <div class="user-info">
-          <div class="user-name">John Doe</div>
-          <div class="user-role">Administrator</div>
+    NexusCRM Pro
+  </div>
+
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <nav class="header-nav" aria-label="Main navigation">
+    <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
+    <a href="#"><i class="fas fa-bell"></i> Notifications</a>
+    <a href="#"><i class="fas fa-cog"></i> Settings</a>
+
+    <div class="user-profile">
+      <div class="user-avatar">
+        {% if request.user.first_name %}
+          {{ request.user.first_name|slice:":1" }}{{ request.user.last_name|slice:":1" }}
+        {% else %}
+          {{ request.user.username|slice:":2" }}
+        {% endif %}
+      </div>
+      <div class="user-info">
+        <div class="user-name">
+          {% if request.user.first_name %}
+            {{ request.user.first_name }} {{ request.user.last_name }}
+          {% else %}
+            {{ request.user.username }}
+          {% endif %}
+        </div>
+        <div class="user-role">
+          {% if request.user.is_superuser %}
+            Administrator
+          {% elif request.user.is_staff %}
+            Staff
+          {% else %}
+            User
+          {% endif %}
         </div>
       </div>
-    </nav>
-  </header>
+    </div>
+  </nav>
+</header>
+
 
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar" aria-label="Sidebar navigation">
@@ -561,9 +585,9 @@
               </a>
             </li>
             <li>
-              <a href="#">
+              <a href="{% url 'report_dashboard' %}">
                 <i class="fas fa-tasks"></i>
-                Tasks
+                Reports
               </a>
             </li>
           </ul>

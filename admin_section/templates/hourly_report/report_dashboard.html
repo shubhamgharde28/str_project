@@ -1,0 +1,752 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Work Report Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ==========================
+   Work Report Dashboard Styles
+   ========================== */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --danger-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --warning-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+}
+
+body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+}
+
+/* Header Styles */
+.dashboard-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  color: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  transform: rotate(30deg);
+}
+
+.dashboard-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.dashboard-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  font-weight: 300;
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  color: white;
+  border-radius: 15px;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  color: white;
+}
+
+/* Filter Section */
+.filter-section {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.filter-section .form-label {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.filter-section .form-control,
+.filter-section .form-select {
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.filter-section .form-control:focus,
+.filter-section .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filter-btn {
+  background: var(--primary-gradient);
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  height: fit-content;
+}
+
+.filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Stats Cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary-gradient);
+}
+
+.stat-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.stat-card.total-reports::before { background: var(--primary-gradient); }
+.stat-card.work-done::before { background: var(--success-gradient); }
+.stat-card.work-not-done::before { background: var(--danger-gradient); }
+.stat-card.total-users::before { background: var(--info-gradient); }
+
+.stat-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+}
+
+.stat-card.total-reports .stat-icon { 
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  color: #667eea;
+}
+.stat-card.work-done .stat-icon { 
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+  color: #4facfe;
+}
+.stat-card.work-not-done .stat-icon { 
+  background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
+  color: #f093fb;
+}
+.stat-card.total-users .stat-icon { 
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+  color: #4facfe;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #2d3748, #4a5568);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+  color: #718096;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+}
+
+/* Charts Section */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.chart-header {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-header i {
+  color: #667eea;
+}
+
+/* Table Section */
+.table-section {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.table-header {
+  background: var(--primary-gradient);
+  color: white;
+  padding: 1.5rem 2rem;
+}
+
+.table-header h5 {
+  margin: 0;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-container {
+  padding: 0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead {
+  background: #f7fafc;
+}
+
+.data-table th {
+  padding: 1.2rem 1rem;
+  font-weight: 700;
+  color: #2d3748;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.data-table td {
+  padding: 1.2rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: all 0.3s ease;
+}
+
+.data-table tbody tr:hover {
+  background: #f7fafc;
+  transform: scale(1.01);
+}
+
+/* Badges */
+.badge {
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.badge-success {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  color: white;
+}
+
+.badge-danger {
+  background: linear-gradient(135deg, #f56565, #e53e3e);
+  color: white;
+}
+
+.badge-info {
+  background: linear-gradient(135deg, #4299e1, #3182ce);
+  color: white;
+}
+
+.badge-secondary {
+  background: linear-gradient(135deg, #a0aec0, #718096);
+  color: white;
+}
+
+/* Details Section */
+.details-collapse {
+  background: linear-gradient(135deg, #f7fafc, #edf2f7);
+  border-radius: 15px;
+  margin: 0.5rem;
+}
+
+.details-content {
+  padding: 1.5rem;
+}
+
+.details-table {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.details-table th {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 1rem;
+  font-weight: 600;
+}
+
+.details-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* View Button */
+.btn-view {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-view:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  color: white;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-title {
+    font-size: 2rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .data-table {
+    min-width: 800px;
+  }
+  
+  .filter-section .row {
+    gap: 1rem;
+  }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-card, .chart-card, .table-section {
+  animation: fadeInUp 0.6s ease-out;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="dashboard-title">
+          <i class="fas fa-chart-line me-3"></i>Work Report Dashboard
+        </h1>
+        <p class="dashboard-subtitle">
+          Comprehensive overview of work reports and performance metrics
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="{% url 'admin:index' %}" class="btn btn-glass">
+          <i class="fas fa-arrow-left me-2"></i>Back to Admin
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-section">
+    <form method="GET">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">Select User</label>
+          <select name="user" class="form-select">
+            <option value="">All Users</option>
+            {% for u in users %}
+              <option value="{{ u.id }}" {% if selected_user == u.id|stringformat:'s' %}selected{% endif %}>
+                {{ u.username }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">From Date</label>
+          <input type="date" name="from_date" value="{{ from_date|default:'' }}" class="form-control">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">To Date</label>
+          <input type="date" name="to_date" value="{{ to_date|default:'' }}" class="form-control">
+        </div>
+
+        <div class="col-md-3">
+          <button type="submit" class="btn filter-btn w-100">
+            <i class="fas fa-filter me-2"></i>Apply Filters
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card total-reports">
+      <div class="stat-icon">
+        <i class="fas fa-clipboard-list"></i>
+      </div>
+      <div class="stat-value">{{ total_reports }}</div>
+      <div class="stat-label">Total Reports</div>
+    </div>
+
+    <div class="stat-card work-done">
+      <div class="stat-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-value">{{ work_done_count }}</div>
+      <div class="stat-label">Work Done</div>
+    </div>
+
+    <div class="stat-card work-not-done">
+      <div class="stat-icon">
+        <i class="fas fa-times-circle"></i>
+      </div>
+      <div class="stat-value">{{ work_not_done_count }}</div>
+      <div class="stat-label">Work Not Done</div>
+    </div>
+
+    <div class="stat-card total-users">
+      <div class="stat-icon">
+        <i class="fas fa-user-friends"></i>
+      </div>
+      <div class="stat-value">{{ users.count }}</div>
+      <div class="stat-label">Total Users</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <i class="fas fa-chart-pie"></i>
+        Work Status Summary
+      </div>
+      <canvas id="workStatusChart" height="250"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <i class="fas fa-chart-bar"></i>
+        Reports by User
+      </div>
+      <canvas id="reportsByUserChart" height="250"></canvas>
+    </div>
+  </div>
+
+  <!-- Detailed Report Table -->
+  <div class="table-section">
+    <div class="table-header">
+      <h5>
+        <i class="fas fa-table me-2"></i>Detailed Work Reports
+      </h5>
+    </div>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Date</th>
+            <th>Hour</th>
+            <th>Work Done</th>
+            <th>Work Types</th>
+            <th>Options</th>
+            <th>Reason (if not done)</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in reports %}
+          <tr>
+            <td><strong>{{ forloop.counter }}</strong></td>
+            <td>
+              <div class="d-flex align-items-center">
+                <i class="fas fa-user-circle me-2 text-primary"></i>
+                {{ report.user.username }}
+              </div>
+            </td>
+            <td>{{ report.report_date }}</td>
+            <td>
+              <span class="badge bg-light text-dark">{{ report.report_hour }}:00</span>
+            </td>
+            <td>
+              {% if report.work_done == 'yes' %}
+                <span class="badge badge-success">
+                  <i class="fas fa-check me-1"></i>Yes
+                </span>
+              {% else %}
+                <span class="badge badge-danger">
+                  <i class="fas fa-times me-1"></i>No
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex flex-wrap gap-1">
+                {% for w in report.work_types.all %}
+                  <span class="badge badge-info">{{ w.name }}</span>
+                {% empty %}
+                  <span class="text-muted small">None</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              <div class="d-flex flex-wrap gap-1">
+                {% for o in report.work_type_options.all %}
+                  <span class="badge badge-secondary">{{ o.name }}</span>
+                {% empty %}
+                  <span class="text-muted small">None</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              <span class="text-muted">{{ report.reason_not_done|default:"-" }}</span>
+            </td>
+            <td>
+              <button class="btn btn-view" data-bs-toggle="collapse" data-bs-target="#details{{ report.id }}">
+                <i class="fas fa-eye me-1"></i>View
+              </button>
+            </td>
+          </tr>
+          <tr class="collapse" id="details{{ report.id }}">
+            <td colspan="9" class="p-0">
+              <div class="details-collapse">
+                <div class="details-content">
+                  {% if report.details.all %}
+                    <h6 class="fw-bold mb-3 text-primary">
+                      <i class="fas fa-info-circle me-2"></i>Work Details
+                    </h6>
+                    <div class="table-responsive">
+                      <table class="details-table w-100">
+                        <thead>
+                          <tr>
+                            <th>Project</th>
+                            <th>Customer</th>
+                            <th>Mobile</th>
+                            <th>Plot</th>
+                            <th>Response</th>
+                            <th>Next Follow-up</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for d in report.details.all %}
+                          <tr>
+                            <td>{{ d.project.name|default:"-" }}</td>
+                            <td>{{ d.customer_name|default:"-" }}</td>
+                            <td>{{ d.mobile_number|default:"-" }}</td>
+                            <td>{{ d.plot_number|default:"-" }}</td>
+                            <td>
+                              <span class="badge bg-light text-dark">{{ d.customer_response|title }}</span>
+                            </td>
+                            <td>{{ d.next_followup_date|default:"-" }}</td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="fas fa-inbox"></i>
+                      <p class="mb-0">No details available for this report.</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h5 class="text-muted">No reports found</h5>
+                <p class="text-muted">No reports match the selected criteria.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Work Status Chart
+  const workStatusCtx = document.getElementById('workStatusChart').getContext('2d');
+  new Chart(workStatusCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Work Done', 'Not Done'],
+      datasets: [{
+        data: [{{ work_done_count }}, {{ work_not_done_count }}],
+        backgroundColor: ['#48bb78', '#f56565'],
+        borderColor: ['#ffffff', '#ffffff'],
+        borderWidth: 3,
+        hoverOffset: 15
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true
+          }
+        }
+      },
+      cutout: '65%'
+    }
+  });
+
+  // Reports by User Chart
+  const reportsByUserCtx = document.getElementById('reportsByUserChart').getContext('2d');
+  new Chart(reportsByUserCtx, {
+    type: 'bar',
+    data: {
+      labels: [{% for u in users %}'{{ u.username }}',{% endfor %}],
+      datasets: [{
+        label: 'Reports Count',
+        data: [{% for u in users %}{{ u.hourly_reports.count }},{% endfor %}],
+        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+        borderColor: 'rgba(102, 126, 234, 1)',
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

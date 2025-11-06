@@ -272,72 +272,87 @@ from django.utils.timesince import timesince
 from django.contrib.auth.decorators import user_passes_test
 
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
+from attendance.models import Attendance, WorkPlan
+from datetime import date
+
+def is_superuser(user):
+    return user.is_superuser
+
+@user_passes_test(is_superuser)
 def dashboard_view(request):
     today = date.today()
-    users = User.objects.exclude(is_superuser=True)
 
+    # Total employees (excluding superusers)
+    users = User.objects.exclude(is_superuser=True)
     total_users = users.count()
 
-    # Attendance stats
+    # Attendance counts
     checked_in_att = Attendance.objects.filter(date=today, check_in_time__isnull=False).select_related('user')
     checked_in_count = checked_in_att.count()
     not_checked_in_count = total_users - checked_in_count
 
-    # WorkPlan stats
-    admin_workplans_count = WorkPlan.objects.filter(type='admin_created').count()
-    user_workplans_count = WorkPlan.objects.filter(type='user_created').count()
-
-    # Recent activities
+    # Recent activities list
     recent_activity = []
 
-    # Attendance: Checked-in
+    def get_user_name(user):
+        """Return user's full name even if profile missing."""
+        try:
+            return f"{user.profile.first_name} {user.profile.last_name}".strip() or user.username
+        except Exception:
+            return user.username
+
+    # Checked-in users
     for att in checked_in_att:
         recent_activity.append({
             'title': 'Checked In',
-            'description': f"{att.user.profile.first_name} {att.user.profile.last_name} checked in at {att.check_in_time.strftime('%H:%M')}",
-            'time': att.check_in_time.strftime("%H:%M"),
+            'description': f"{get_user_name(att.user)} checked in at {att.check_in_time.strftime('%I:%M %p')}",
+            'time': att.check_in_time.strftime('%H:%M'),
             'user_id': att.user.id,
             'icon': 'fa-sign-in-alt',
             'color': 'var(--success)',
         })
 
-    # Attendance: Checked-out
+    # Checked-out users
     checked_out_att = Attendance.objects.filter(date=today, check_out_time__isnull=False).select_related('user')
     for att in checked_out_att:
         recent_activity.append({
             'title': 'Checked Out',
-            'description': f"{att.user.profile.first_name} {att.user.profile.last_name} checked out at {att.check_out_time.strftime('%H:%M')}",
-            'time': att.check_out_time.strftime("%H:%M"),
+            'description': f"{get_user_name(att.user)} checked out at {att.check_out_time.strftime('%I:%M %p')}",
+            'time': att.check_out_time.strftime('%H:%M'),
             'user_id': att.user.id,
             'icon': 'fa-sign-out-alt',
             'color': 'var(--primary)',
         })
 
-    # WorkPlan recent activities (last 5)
-    recent_workplans = WorkPlan.objects.order_by('-created_at')[:5]
-    for plan in recent_workplans:
-        recent_activity.append({
-            'title': 'WorkPlan Created' if plan.type=='user_created' else 'Admin WorkPlan Created',
-            'description': f"{plan.created_by.profile.first_name} {plan.created_by.profile.last_name} created workplan for {plan.date.strftime('%d-%b-%Y')}",
-            'time': plan.created_at.strftime("%H:%M"),
-            'user_id': plan.created_by.id,
-            'icon': 'fa-tasks',
-            'color': 'var(--warning)' if plan.type=='user_created' else 'var(--info)',
-        })
-
-    # Sort by time descending
+    # Sort latest activities
     recent_activity = sorted(recent_activity, key=lambda x: x['time'], reverse=True)
+
+    # Workplan stats
+    workplans_today = WorkPlan.objects.filter(date=today)
+    total_workplans = workplans_today.count()
+    completed_workplans = workplans_today.filter(status='completed').count()
+    pending_workplans = total_workplans - completed_workplans
+
+    # Admin/User workplan stats
+    admin_workplans_count = WorkPlan.objects.filter(type='admin_created').count()
+    user_workplans_count = WorkPlan.objects.filter(type='user_created').count()
 
     context = {
         'total_users': total_users,
         'checked_in_count': checked_in_count,
         'not_checked_in_count': not_checked_in_count,
+        'recent_activity': recent_activity,
+        'total_workplans': total_workplans,
+        'completed_workplans': completed_workplans,
+        'pending_workplans': pending_workplans,
         'admin_workplans_count': admin_workplans_count,
         'user_workplans_count': user_workplans_count,
-        'recent_activity': recent_activity,
     }
-    return render(request, 'dashboard.html', context)
 
+    return render(request, 'dashboard.html', context)
 
 
 
@@ -658,6 +673,14 @@ def admin_workplan_list(request):
     workplans = WorkPlan.objects.filter(type='admin_created').order_by('-date')
     return render(request, 'workplan/admin_workplan_list.html', {'workplans': workplans})
 
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import user_passes_test
+from .forms import WorkPlanForm
+
+def is_superuser(user):
+    return user.is_superuser
+
 @user_passes_test(is_superuser)
 def admin_workplan_create(request):
     if request.method == 'POST':
@@ -668,11 +691,15 @@ def admin_workplan_create(request):
             plan.type = 'admin_created'
             plan.save()
             form.save_m2m()
-            messages.success(request, "Admin work plan created successfully!")
+            messages.success(request, "✅ Admin work plan created successfully!")
             return redirect('admin_workplan_list')
+        else:
+            messages.error(request, "⚠️ Please correct the errors below.")
     else:
         form = WorkPlanForm()
+
     return render(request, 'workplan/admin_workplan_create.html', {'form': form})
+
 
 @user_passes_test(is_superuser)
 def admin_workplan_edit(request, pk):
@@ -748,3 +775,138 @@ def workplan_dashboard(request):
 
 
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from attendance.models import WorkType, WorkTypeOption, HourlyReport, WorkDetail
+from .forms import WorkTypeForm, WorkTypeOptionForm, HourlyReportForm, WorkDetailForm
+
+# 🧩 WorkType CRUD
+@login_required
+def worktype_list(request):
+    worktypes = WorkType.objects.all()
+    return render(request, 'hourly_report/worktype_list.html', {'worktypes': worktypes})
+
+@login_required
+def worktype_create(request):
+    if request.method == 'POST':
+        form = WorkTypeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Work Type created successfully.")
+            return redirect('worktype_list')
+    else:
+        form = WorkTypeForm()
+    return render(request, 'hourly_report/worktype_form.html', {'form': form, 'title': 'Create Work Type'})
+
+@login_required
+def worktype_edit(request, pk):
+    worktype = get_object_or_404(WorkType, pk=pk)
+    form = WorkTypeForm(request.POST or None, instance=worktype)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Work Type updated successfully.")
+        return redirect('worktype_list')
+    return render(request, 'hourly_report/worktype_form.html', {'form': form, 'title': 'Edit Work Type'})
+
+@login_required
+def worktype_delete(request, pk):
+    worktype = get_object_or_404(WorkType, pk=pk)
+    worktype.delete()
+    messages.success(request, "Work Type deleted successfully.")
+    return redirect('worktype_list')
+
+
+# 🧩 HourlyReport CRUD
+@login_required
+def hourlyreport_list(request):
+    reports = HourlyReport.objects.filter(user=request.user).order_by('-report_date', '-report_hour')
+    return render(request, 'hourly_report/hourlyreport_list.html', {'reports': reports})
+
+@login_required
+def hourlyreport_create(request):
+    if request.method == 'POST':
+        form = HourlyReportForm(request.POST)
+        if form.is_valid():
+            hourly = form.save(commit=False)
+            hourly.user = request.user
+            hourly.save()
+            form.save_m2m()
+            messages.success(request, "Hourly Report created successfully.")
+            return redirect('hourlyreport_list')
+    else:
+        form = HourlyReportForm()
+    return render(request, 'hourly_report/hourlyreport_form.html', {'form': form, 'title': 'Create Hourly Report'})
+
+@login_required
+def hourlyreport_edit(request, pk):
+    report = get_object_or_404(HourlyReport, pk=pk, user=request.user)
+    form = HourlyReportForm(request.POST or None, instance=report)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Hourly Report updated successfully.")
+        return redirect('hourlyreport_list')
+    return render(request, 'hourly_report/hourlyreport_form.html', {'form': form, 'title': 'Edit Hourly Report'})
+
+
+# 🧩 WorkDetail CRUD
+@login_required
+def workdetail_list(request):
+    details = WorkDetail.objects.select_related('hourly_report', 'work_type_option', 'project')
+    return render(request, 'hourly_report/workdetail_list.html', {'details': details})
+
+@login_required
+def workdetail_create(request):
+    if request.method == 'POST':
+        form = WorkDetailForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Work Detail added successfully.")
+            return redirect('workdetail_list')
+    else:
+        form = WorkDetailForm()
+    return render(request, 'hourly_report/workdetail_form.html', {'form': form, 'title': 'Add Work Detail'})
+
+@login_required
+def workdetail_edit(request, pk):
+    detail = get_object_or_404(WorkDetail, pk=pk)
+    form = WorkDetailForm(request.POST or None, instance=detail)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Work Detail updated successfully.")
+        return redirect('workdetail_list')
+    return render(request, 'hourly_report/workdetail_form.html', {'form': form, 'title': 'Edit Work Detail'})
+
+
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from attendance.models import HourlyReport
+
+
+
+def report_dashboard(request):
+    users = User.objects.all()
+    selected_user = request.GET.get('user')
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
+
+    reports = HourlyReport.objects.all().select_related('user').prefetch_related('work_types', 'work_type_options', 'details')
+
+    if selected_user:
+        reports = reports.filter(user_id=selected_user)
+    if from_date:
+        reports = reports.filter(report_date__gte=from_date)
+    if to_date:
+        reports = reports.filter(report_date__lte=to_date)
+
+    context = {
+        'reports': reports,
+        'users': users,
+        'selected_user': selected_user,
+        'from_date': from_date,
+        'to_date': to_date,
+        'total_reports': reports.count(),
+        'work_done_count': reports.filter(work_done='yes').count(),
+        'work_not_done_count': reports.filter(work_done='no').count(),
+    }
+    return render(request, 'hourly_report/report_dashboard.html', context)

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Work Details{% endblock %}
+{% block content %}
+<div class="card p-4">
+  <h3>Work Details</h3>
+  <a href="{% url 'workdetail_create' %}" class="btn btn-primary mb-3">+ Add Work Detail</a>
+
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Hourly Report</th>
+        <th>Work Type Option</th>
+        <th>Customer Name</th>
+        <th>Response</th>
+        <th>Next Follow-up</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for detail in details %}
+      <tr>
+        <td>{{ detail.hourly_report }}</td>
+        <td>{{ detail.work_type_option.name }}</td>
+        <td>{{ detail.customer_name }}</td>
+        <td>{{ detail.get_customer_response_display }}</td>
+        <td>{{ detail.next_followup_date|default:"—" }}</td>
+        <td>
+          <a href="{% url 'workdetail_edit' detail.id %}" class="btn btn-sm btn-warning">Edit</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">No work details found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

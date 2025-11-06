@@ -54,6 +54,25 @@ urlpatterns = [
     path('workplans/user/edit/<int:pk>/', views.user_workplan_edit, name='user_workplan_edit'),
     path('workplans/user/delete/<int:pk>/', views.user_workplan_delete, name='user_workplan_delete'),
 
+    # WorkType URLs
+    path('worktypes/', views.worktype_list, name='worktype_list'),
+    path('worktypes/create/', views.worktype_create, name='worktype_create'),
+    path('worktypes/<int:pk>/edit/', views.worktype_edit, name='worktype_edit'),
+    path('worktypes/<int:pk>/delete/', views.worktype_delete, name='worktype_delete'),
+
+    # HourlyReport URLs
+    path('hourlyreports/', views.hourlyreport_list, name='hourlyreport_list'),
+    path('hourlyreports/create/', views.hourlyreport_create, name='hourlyreport_create'),
+    path('hourlyreports/<int:pk>/edit/', views.hourlyreport_edit, name='hourlyreport_edit'),
+
+    # WorkDetail URLs
+    path('workdetails/', views.workdetail_list, name='workdetail_list'),
+    path('workdetails/create/', views.workdetail_create, name='workdetail_create'),
+    path('workdetails/<int:pk>/edit/', views.workdetail_edit, name='workdetail_edit'),
+
+    path('dashboard/reports/', views.report_dashboard, name='report_dashboard'),
+
+
 
 
 ]

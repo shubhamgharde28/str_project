@@ -1,7 +1,9 @@
 from django.urls import path, include
 
 
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, PendingHourlyReportCheckView
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, PendingHourlyReportCheckView, MonthlyAttendanceSummaryView, TargetSummaryView
+
+
 
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -19,6 +21,9 @@ urlpatterns = [
 
     path('attendance/check-in/', AttendanceCheckInView.as_view(), name='attendance-check-in'),
     path('attendance/check-out/', AttendanceCheckOutView.as_view(), name='attendance-check-out'),
+    path('attendance/summary/', MonthlyAttendanceSummaryView.as_view(), name='attendance-summary'),
+
+    path('target/summary/', TargetSummaryView.as_view(), name='target-summary'),
 
     path('workplans/user/', UserWorkPlanListCreateView.as_view(), name='user-workplans'),
     path('workplans/user/<int:pk>/', UserWorkPlanDetailView.as_view(), name='user-workplan-detail'),

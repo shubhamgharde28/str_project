@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Hourly Reports{% endblock %}
+{% block content %}
+<div class="card p-4">
+  <h3>Hourly Reports</h3>
+  <a href="{% url 'hourlyreport_create' %}" class="btn btn-primary mb-3">+ Add Report</a>
+
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Hour</th>
+        <th>Work Done</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for report in reports %}
+      <tr>
+        <td>{{ report.report_date }}</td>
+        <td>{{ report.report_hour }}</td>
+        <td>{{ report.get_work_done_display }}</td>
+        <td>
+          <a href="{% url 'hourlyreport_edit' report.id %}" class="btn btn-sm btn-warning">Edit</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No reports available.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
