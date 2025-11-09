@@ -282,4 +282,14 @@ class HourlyReportCreateSerializer(serializers.ModelSerializer):
         return HourlyReportSerializer(instance, context=self.context).data
 
 
+# serializers.py
+from rest_framework import serializers
+from .models import Project
+
+class ProjectSerializer(serializers.ModelSerializer):
+    remaining_plots = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Project
+        fields = '__all__'
 

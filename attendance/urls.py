@@ -1,7 +1,8 @@
 from django.urls import path, include
 
 
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, PendingHourlyReportCheckView, MonthlyAttendanceSummaryView, TargetSummaryView
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, PendingHourlyReportCheckView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView
+
 
 
 
@@ -29,6 +30,9 @@ urlpatterns = [
     path('workplans/user/<int:pk>/', UserWorkPlanDetailView.as_view(), name='user-workplan-detail'),
     path('workplans/user/all/', UserWorkPlanAllView.as_view(), name='user-workplans-all'),
 
+    path('work-types/', WorkTypeListAPIView.as_view(), name='work-type-list'),
+    path('workplan-titles/', WorkPlanTitleListAPIView.as_view(), name='workplan-title-list'),
+    path('projects/', ProjectListAPIView.as_view(), name='projects-list'),
 
     path('hourly-reports/', HourlyReportListView.as_view(), name='hourly-report-list'),
     path('hourly-reports/create/', HourlyReportCreateView.as_view(), name='hourly-report-create'),
