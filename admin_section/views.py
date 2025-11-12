@@ -471,6 +471,18 @@ def delete_user(request, user_id):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 from attendance.models import Attendance
 
 from django.shortcuts import render
@@ -596,6 +608,17 @@ def daily_attendance_dashboard(request):
         'data': data,
     }
     return render(request, 'attendance/daily_attendance_dashboard.html', context)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -910,3 +933,457 @@ def report_dashboard(request):
         'work_not_done_count': reports.filter(work_done='no').count(),
     }
     return render(request, 'hourly_report/report_dashboard.html', context)
+
+
+
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from django.db.models import Sum
+from datetime import date
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+
+from .models import MonthlyTarget, Sale
+from .serializers import MonthlyTargetSerializer, SaleSerializer
+from .permissions import IsSuperUser
+
+
+class MonthlyTargetViewSet(viewsets.ModelViewSet):
+    queryset = MonthlyTarget.objects.all()
+    serializer_class = MonthlyTargetSerializer
+    permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+
+class SaleViewSet(viewsets.ModelViewSet):
+    queryset = Sale.objects.all()
+    serializer_class = SaleSerializer
+    permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+
+class UserTargetStatusViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+
+    def list(self, request):
+        """Show target/sale summary for all users."""
+        year = date.today().year
+        users = User.objects.all().order_by('id')
+        response_data = []
+
+        for user in users:
+            targets = MonthlyTarget.objects.filter(user=user, year=year).order_by('month')
+            if not targets.exists():
+                continue  # skip users with no targets
+
+            monthly_status = []
+            carry_forward = 0
+
+            for target in targets:
+                sales = Sale.objects.filter(user=user, year=year, month=target.month).aggregate(total_sold=Sum('area_sold'))
+                total_sold = sales['total_sold'] or 0
+                effective_sold = total_sold + carry_forward
+
+                if effective_sold >= target.target_area:
+                    status_color = 'green'
+                    carry_forward = effective_sold - target.target_area
+                else:
+                    status_color = 'red'
+                    carry_forward = 0
+
+                monthly_status.append({
+                    'month': target.get_month_display(),
+                    'target_area': target.target_area,
+                    'sold_area': total_sold,
+                    'status': status_color,
+                    'carry_forward': carry_forward,
+                })
+
+            response_data.append({
+                'user_id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'year': year,
+                'monthly_status': monthly_status
+            })
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None):
+        """Show target/sale summary for one user."""
+        user = get_object_or_404(User, id=pk)
+        year = date.today().year
+        targets = MonthlyTarget.objects.filter(user=user, year=year).order_by('month')
+
+        if not targets.exists():
+            return Response({"detail": "No targets found for this user."}, status=status.HTTP_404_NOT_FOUND)
+
+        monthly_status = []
+        carry_forward = 0
+
+        for target in targets:
+            sales = Sale.objects.filter(user=user, year=year, month=target.month).aggregate(total_sold=Sum('area_sold'))
+            total_sold = sales['total_sold'] or 0
+            effective_sold = total_sold + carry_forward
+
+            if effective_sold >= target.target_area:
+                status_color = 'green'
+                carry_forward = effective_sold - target.target_area
+            else:
+                status_color = 'red'
+                carry_forward = 0
+
+            monthly_status.append({
+                'month': target.get_month_display(),
+                'target_area': target.target_area,
+                'sold_area': total_sold,
+                'status': status_color,
+                'carry_forward': carry_forward,
+            })
+
+        return Response({
+            'user_id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'year': year,
+            'monthly_status': monthly_status
+        }, status=status.HTTP_200_OK)
+
+
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from django.db.models import Sum
+from datetime import date
+from django.contrib.auth.models import User
+
+from .models import MonthlyTarget, Sale
+from .permissions import IsSuperUser
+
+
+class TargetAndSaleDashboardViewSet(viewsets.ViewSet):
+    """
+    API endpoint for showing target and sale dashboard summary.
+    Only accessible by superusers.
+    """
+    permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+
+    def list(self, request):
+        today = date.today()
+
+        # Optional year/month filtering from query params
+        year = int(request.query_params.get('year', today.year))
+        month = request.query_params.get('month')
+        if month:
+            month = int(month)
+
+        total_targets = MonthlyTarget.objects.filter(year=year)
+        total_sales = Sale.objects.filter(year=year)
+        total_users = User.objects.exclude(is_superuser=True).count()
+
+        total_target_area = total_targets.aggregate(total=Sum('target_area'))['total'] or 0
+        total_sold_area = total_sales.aggregate(total=Sum('area_sold'))['total'] or 0
+
+        progress_percent = round((total_sold_area / total_target_area) * 100, 2) if total_target_area else 0.0
+
+        users_status = []
+        users = User.objects.exclude(is_superuser=True).order_by('username')
+
+        for user in users:
+            user_targets = MonthlyTarget.objects.filter(user=user, year=year)
+            if month:
+                user_targets = user_targets.filter(month=month)
+            user_targets = user_targets.order_by('month')
+
+            monthly_status = []
+            carry_forward = 0
+
+            for target in user_targets:
+                sales = Sale.objects.filter(user=user, year=year, month=target.month).aggregate(total_sold=Sum('area_sold'))
+                total_sold = sales['total_sold'] or 0
+                effective_sold = total_sold + carry_forward
+
+                if effective_sold >= target.target_area:
+                    status_color = 'green'
+                    carry_forward = effective_sold - target.target_area
+                else:
+                    status_color = 'red'
+                    carry_forward = 0
+
+                monthly_status.append({
+                    'month': target.get_month_display(),
+                    'target_area': target.target_area,
+                    'sold_area': total_sold,
+                    'status': status_color,
+                    'carry_forward': carry_forward,
+                })
+
+            users_status.append({
+                'user_id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'monthly_status': monthly_status,
+            })
+
+        data = {
+            'year': year,
+            'month': month,
+            'total_targets_count': total_targets.count(),
+            'total_sales_count': total_sales.count(),
+            'total_users_count': total_users,
+            'total_target_area': total_target_area,
+            'total_sold_area': total_sold_area,
+            'progress_percent': progress_percent,
+            'users_status': users_status,
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+
+# admin_section/views.py
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+from attendance.models import UserProfile
+from .serializers import UserSerializer, UserProfileSerializer
+from .permissions import IsSuperUser
+
+class AdminUserViewSet(viewsets.ViewSet):
+    permission_classes = [IsSuperUser]
+
+    def list(self, request):
+        filter_type = request.query_params.get('filter', 'all')
+
+        users = User.objects.all().order_by('-date_joined')
+        if filter_type == 'pending':
+            users = users.filter(is_active=False, is_superuser=False)
+        elif filter_type == 'approved':
+            users = users.filter(is_active=True, is_superuser=False)
+        elif filter_type == 'admins':
+            users = users.filter(is_superuser=True)
+
+        serializer = UserSerializer(users, many=True)
+        return Response({
+            "summary": {
+                "total_users": User.objects.exclude(is_superuser=True).count(),
+                "approved_users": User.objects.filter(is_active=True, is_superuser=False).count(),
+                "pending_users": User.objects.filter(is_active=False, is_superuser=False).count(),
+                "super_users": User.objects.filter(is_superuser=True).count(),
+                "active_filter": filter_type,
+            },
+            "users": serializer.data
+        })
+
+    def retrieve(self, request, pk=None):
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        user = get_object_or_404(User, pk=pk)
+        user.is_active = True
+        user.save()
+        return Response({"message": f"{user.username} approved successfully."})
+
+    @action(detail=True, methods=['put'])
+    def edit(self, request, pk=None):
+        """
+        ✅ Update user info + profile safely.
+        """
+        user = get_object_or_404(User, pk=pk)
+
+        # --- Update basic user fields ---
+        user.username = request.data.get('username', user.username)
+        user.email = request.data.get('email', user.email)
+        user.save()
+
+        # --- Handle Profile ---
+        profile_data = request.data.get('profile', {})
+        profile, created = UserProfile.objects.get_or_create(user=user)
+
+        serializer = UserProfileSerializer(profile, data=profile_data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_serializer = UserSerializer(user)
+        return Response({
+            "message": "User and profile updated successfully.",
+            "user": user_serializer.data
+        })
+
+    def destroy(self, request, pk=None):
+        user = get_object_or_404(User, pk=pk)
+        user.delete()
+        return Response({"message": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from datetime import date, timedelta
+import calendar
+from geopy.geocoders import Nominatim
+from attendance.models import Attendance
+from .permissions import IsSuperUser
+
+
+class AttendanceDashboardViewSet(viewsets.ViewSet):
+    """
+    Superuser-only Attendance Dashboard APIs
+    """
+
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+    # =========================
+    # DAILY ATTENDANCE DASHBOARD
+    # =========================
+    @action(detail=False, methods=['get'])
+    def daily(self, request):
+        today = date.today()
+        users = User.objects.exclude(is_superuser=True).order_by('username')
+
+        total_employees = users.count()
+        present_count = 0
+        absent_count = 0
+
+        geolocator = Nominatim(user_agent="attendance_app")
+
+        data = []
+        for user in users:
+            attendance = Attendance.objects.filter(user=user, date=today).first()
+
+            if attendance and attendance.check_in_time:
+                status_label = 'Present'
+                present_count += 1
+            else:
+                status_label = 'Absent'
+                absent_count += 1
+
+            # Get location names safely
+            def get_location(lat, lon):
+                if lat and lon:
+                    try:
+                        location = geolocator.reverse(f"{lat},{lon}", timeout=10)
+                        return location.address if location else '-'
+                    except:
+                        return '-'
+                return '-'
+
+            data.append({
+                'user_id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'status': status_label,
+                'check_in': attendance.check_in_time.strftime("%H:%M:%S") if attendance and attendance.check_in_time else '-',
+                'check_in_location': get_location(attendance.check_in_latitude, attendance.check_in_longitude) if attendance else '-',
+                'check_out': attendance.check_out_time.strftime("%H:%M:%S") if attendance and attendance.check_out_time else '-',
+                'check_out_location': get_location(attendance.check_out_latitude, attendance.check_out_longitude) if attendance else '-',
+            })
+
+        return Response({
+            'date': today,
+            'total_employees': total_employees,
+            'present_count': present_count,
+            'absent_count': absent_count,
+            'attendance_data': data
+        }, status=status.HTTP_200_OK)
+
+    # =========================
+    # MONTHLY ATTENDANCE DASHBOARD
+    # =========================
+    @action(detail=False, methods=['get'])
+    def monthly(self, request):
+        today = date.today()
+        month = int(request.query_params.get('month', today.month))
+        year = int(request.query_params.get('year', today.year))
+
+        total_days = calendar.monthrange(year, month)[1]
+        start_date = date(year, month, 1)
+        end_date = date(year, month, total_days)
+
+        users = User.objects.exclude(is_superuser=True).order_by('username')
+        attendance_summary = []
+
+        for user in users:
+            daily_status = []
+            for day in range(1, total_days + 1):
+                current_date = date(year, month, day)
+                attendance = Attendance.objects.filter(user=user, date=current_date).first()
+
+                if attendance:
+                    daily_status.append('P')  # Present
+                else:
+                    if current_date > today:
+                        daily_status.append('-')  # Future
+                    else:
+                        daily_status.append('A')  # Absent
+
+            attendance_summary.append({
+                'user_id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'attendance_days': daily_status
+            })
+
+        return Response({
+            'month': month,
+            'year': year,
+            'days_in_month': list(range(1, total_days + 1)),
+            'attendance_summary': attendance_summary
+        }, status=status.HTTP_200_OK)
+
+
+# admin_section/views/workplan_api.py
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
+from attendance.models import WorkPlanTitle
+from admin_section.serializers import WorkPlanTitleSerializer
+from admin_section.permissions import IsSuperUser
+
+
+class WorkPlanTitleViewSet(viewsets.ModelViewSet):
+    """
+    Superuser-only CRUD for WorkPlan Titles
+    """
+    queryset = WorkPlanTitle.objects.all().order_by('title')
+    serializer_class = WorkPlanTitleSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"message": "WorkPlan Title created successfully!", "data": serializer.data},
+            status=status.HTTP_201_CREATED
+        )
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"message": "WorkPlan Title updated successfully!", "data": serializer.data},
+            status=status.HTTP_200_OK
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "WorkPlan Title deleted successfully!"}, status=status.HTTP_200_OK)

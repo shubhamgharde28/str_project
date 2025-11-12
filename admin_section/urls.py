@@ -1,7 +1,41 @@
 from django.urls import path
 from . import views
+# attendance/api/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet
+
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet, TargetAndSaleDashboardViewSet, AdminUserViewSet, AttendanceDashboardViewSet, WorkPlanTitleViewSet
+
+
+
+
+
+router = DefaultRouter()
+
+router.register(r'targets', MonthlyTargetViewSet, basename='target')
+router.register(r'sales', SaleViewSet, basename='sale')
+router.register(r'user-target-status', UserTargetStatusViewSet, basename='user-target-status')
+router.register(r'target-sale-dashboard', TargetAndSaleDashboardViewSet, basename='target-sale-dashboard')
+router.register('users', AdminUserViewSet, basename='admin-users')
+router.register(r'attendance-dashboard', AttendanceDashboardViewSet, basename='attendance-dashboard')
+router.register(r'workplan-titles', WorkPlanTitleViewSet, basename='workplan-titles')
+
+
 
 urlpatterns = [
+    path('', include(router.urls)),
+
+
+
+
+
+
+
+
+
     # MonthlyTarget CRUD
     path('target_and_sale_dashboard/', views.target_and_sale_dashboard, name='target-sale-dashboard'),
 
