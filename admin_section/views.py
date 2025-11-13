@@ -1387,3 +1387,136 @@ class WorkPlanTitleViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "WorkPlan Title deleted successfully!"}, status=status.HTTP_200_OK)
+
+
+
+# admin_section/views/workplan_admin_api.py
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
+from attendance.models import WorkPlan
+from admin_section.serializers import WorkPlanSerializer
+from admin_section.permissions import IsSuperUser
+
+
+class AdminWorkPlanViewSet(viewsets.ModelViewSet):
+    """
+    API for Superusers to manage Admin-Created WorkPlans
+    """
+    serializer_class = WorkPlanSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+    def get_queryset(self):
+        return WorkPlan.objects.filter(type='admin_created').order_by('-date')
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user, type='admin_created')
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(
+            {"message": "✅ Admin work plan created successfully!", "data": serializer.data},
+            status=status.HTTP_201_CREATED
+        )
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"message": "Work plan updated successfully!", "data": serializer.data},
+            status=status.HTTP_200_OK
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "Work plan deleted successfully!"}, status=status.HTTP_200_OK)
+
+
+# admin_section/views.py
+
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from attendance.models import WorkPlan
+from .serializers import WorkPlanSerializer
+
+class UserWorkPlanViewSet(viewsets.ModelViewSet):
+    serializer_class = WorkPlanSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Return only the logged-in user's workplans."""
+        return WorkPlan.objects.filter(created_by=self.request.user, type='user_created').order_by('-date')
+
+    def perform_create(self, serializer):
+        """Automatically assign created_by and type."""
+        serializer.save(created_by=self.request.user, type='user_created')
+
+    @action(detail=False, methods=['get'])
+    def monthly(self, request):
+        """Get all workplans for a specific month and year."""
+        month = request.query_params.get('month')
+        year = request.query_params.get('year')
+
+        if not month or not year:
+            return Response({'error': 'Please provide month and year in query parameters.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        workplans = WorkPlan.objects.filter(
+            created_by=request.user,
+            type='user_created',
+            date__year=year,
+            date__month=month
+        ).order_by('-date')
+
+        serializer = self.get_serializer(workplans, many=True)
+        return Response(serializer.data)
+
+
+from rest_framework import viewsets, permissions
+from attendance.models import WorkType, WorkTypeOption, HourlyReport, WorkDetail
+from .serializers import (
+    WorkTypeSerializer, WorkTypeOptionSerializer,
+    HourlyReportSerializer, WorkDetailSerializer
+)
+
+
+# 🧩 WorkType CRUD
+class WorkTypeViewSet(viewsets.ModelViewSet):
+    queryset = WorkType.objects.all()
+    serializer_class = WorkTypeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+# 🧩 WorkTypeOption CRUD
+class WorkTypeOptionViewSet(viewsets.ModelViewSet):
+    queryset = WorkTypeOption.objects.all()
+    serializer_class = WorkTypeOptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+# 🧩 HourlyReport CRUD
+class HourlyReportViewSet(viewsets.ModelViewSet):
+    serializer_class = HourlyReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Each user can only access their own reports
+        return HourlyReport.objects.filter(user=self.request.user).order_by('-report_date', '-report_hour')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+# 🧩 WorkDetail CRUD
+class WorkDetailViewSet(viewsets.ModelViewSet):
+    serializer_class = WorkDetailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return WorkDetail.objects.select_related('hourly_report', 'work_type_option', 'project')

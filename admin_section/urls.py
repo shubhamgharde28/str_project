@@ -7,7 +7,10 @@ from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet, TargetAndSaleDashboardViewSet, AdminUserViewSet, AttendanceDashboardViewSet, WorkPlanTitleViewSet
+from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet, TargetAndSaleDashboardViewSet, AdminUserViewSet, AttendanceDashboardViewSet, WorkPlanTitleViewSet, AdminWorkPlanViewSet, UserWorkPlanViewSet, WorkTypeViewSet, WorkTypeOptionViewSet, HourlyReportViewSet, WorkDetailViewSet
+
+
+
 
 
 
@@ -22,7 +25,12 @@ router.register(r'target-sale-dashboard', TargetAndSaleDashboardViewSet, basenam
 router.register('users', AdminUserViewSet, basename='admin-users')
 router.register(r'attendance-dashboard', AttendanceDashboardViewSet, basename='attendance-dashboard')
 router.register(r'workplan-titles', WorkPlanTitleViewSet, basename='workplan-titles')
-
+router.register(r'admin-workplans', AdminWorkPlanViewSet, basename='admin-workplans')
+router.register(r'user-workplans', UserWorkPlanViewSet, basename='user-workplans')
+router.register(r'worktypes', WorkTypeViewSet, basename='worktype')
+router.register(r'worktype-options', WorkTypeOptionViewSet, basename='worktypeoption')
+router.register(r'hourly-reports', HourlyReportViewSet, basename='hourlyreport')
+router.register(r'work-details', WorkDetailViewSet, basename='workdetail')
 
 
 urlpatterns = [
