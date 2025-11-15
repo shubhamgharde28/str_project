@@ -1520,3 +1520,263 @@ class WorkDetailViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return WorkDetail.objects.select_related('hourly_report', 'work_type_option', 'project')
+
+
+
+
+
+from rest_framework.viewsets import ViewSet
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from attendance.models import (
+    Attendance, WorkPlan, WorkType, WorkTypeOption,
+    HourlyReport, WorkDetail
+)
+from datetime import date
+from .permissions import IsSuperUser
+from django.db import models
+
+from rest_framework.viewsets import ViewSet
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from attendance.models import (
+    Attendance, WorkPlan, WorkType, WorkTypeOption,
+    HourlyReport, WorkDetail, Project
+)
+from datetime import date
+from .permissions import IsSuperUser
+from django.db import models
+
+from rest_framework.viewsets import ViewSet
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from django.db import models
+from datetime import date
+from .permissions import IsSuperUser
+
+
+
+class DashboardViewSet(ViewSet):
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+    def list(self, request):
+        today = date.today()
+
+        # ----------------------
+        # USER & ATTENDANCE DATA
+        # ----------------------
+        users = User.objects.exclude(is_superuser=True)
+        total_users = users.count()
+
+        checked_in_att = Attendance.objects.filter(date=today, check_in_time__isnull=False)
+        checked_out_att = Attendance.objects.filter(date=today, check_out_time__isnull=False)
+
+        checked_in_count = checked_in_att.count()
+        not_checked_in_count = total_users - checked_in_count
+
+        # Helper to get full name
+        def get_user_name(user):
+            try:
+                full = f"{user.profile.first_name} {user.profile.last_name}".strip()
+                return full or user.username
+            except:
+                return user.username
+
+        # ----------------------
+        # RECENT ACTIVITY
+        # ----------------------
+        recent_activity = []
+
+        # 1️⃣ User Signups today
+        for u in users.filter(date_joined__date=today):
+            recent_activity.append({
+                "title": "User Signed Up",
+                "description": f"{get_user_name(u)} signed up",
+                "time": u.date_joined.strftime('%H:%M'),
+                "user_id": u.id,
+                "icon": "fa-user-plus",
+                "color": "var(--info)"
+            })
+
+        # 2️⃣ User Logins today
+        for u in users.filter(last_login__date=today):
+            recent_activity.append({
+                "title": "User Logged In",
+                "description": f"{get_user_name(u)} logged in",
+                "time": u.last_login.strftime('%H:%M'),
+                "user_id": u.id,
+                "icon": "fa-sign-in-alt",
+                "color": "var(--success)"
+            })
+
+        # 3️⃣ Attendance check-in
+        for att in checked_in_att:
+            recent_activity.append({
+                "title": "Checked In",
+                "description": f"{get_user_name(att.user)} checked in at {att.check_in_time.strftime('%I:%M %p')}",
+                "time": att.check_in_time.strftime('%H:%M'),
+                "user_id": att.user.id,
+                "icon": "fa-sign-in-alt",
+                "color": "var(--success)"
+            })
+
+        # 4️⃣ Attendance check-out (also treat as logout)
+        for att in checked_out_att:
+            recent_activity.append({
+                "title": "Checked Out / Logged Out",
+                "description": f"{get_user_name(att.user)} checked out at {att.check_out_time.strftime('%I:%M %p')}",
+                "time": att.check_out_time.strftime('%H:%M'),
+                "user_id": att.user.id,
+                "icon": "fa-sign-out-alt",
+                "color": "var(--warning)"
+            })
+
+        # 5️⃣ Profile created / updated today
+        for p in UserProfile.objects.filter(created_at__date=today):
+            recent_activity.append({
+                "title": "Profile Created",
+                "description": f"{get_user_name(p.user)} created profile",
+                "time": p.created_at.strftime('%H:%M'),
+                "user_id": p.user.id,
+                "icon": "fa-id-card",
+                "color": "var(--info)"
+            })
+
+        for p in UserProfile.objects.filter(updated_at__date=today):
+            recent_activity.append({
+                "title": "Profile Updated",
+                "description": f"{get_user_name(p.user)} updated profile",
+                "time": p.updated_at.strftime('%H:%M'),
+                "user_id": p.user.id,
+                "icon": "fa-edit",
+                "color": "var(--warning)"
+            })
+
+        # 6️⃣ Project created today
+        for proj in Project.objects.filter(created_at__date=today):
+            recent_activity.append({
+                "title": "Project Created",
+                "description": f"{proj.name} project created",
+                "time": proj.created_at.strftime('%H:%M'),
+                "user_id": proj.created_by.id if proj.created_by else None,
+                "icon": "fa-building",
+                "color": "var(--dark)"
+            })
+
+        # 7️⃣ Monthly Target created today
+        for mt in MonthlyTarget.objects.filter(user__in=users, month=today.month, year=today.year):
+            recent_activity.append({
+                "title": "Monthly Target Set",
+                "description": f"{get_user_name(mt.user)} set monthly target",
+                "time": "09:00",
+                "user_id": mt.user.id,
+                "icon": "fa-bullseye",
+                "color": "var(--primary)"
+            })
+
+        # 8️⃣ Sale added today
+        for sale in Sale.objects.filter(user__in=users, month=today.month, year=today.year):
+            recent_activity.append({
+                "title": "Sale Added",
+                "description": f"{get_user_name(sale.user)} added sale {sale.area_sold} sq ft",
+                "time": "09:30",
+                "user_id": sale.user.id,
+                "icon": "fa-chart-line",
+                "color": "var(--success)"
+            })
+
+        # 9️⃣ WorkPlan created today
+        for wp in WorkPlan.objects.filter(created_at__date=today):
+            recent_activity.append({
+                "title": "Work Plan Created",
+                "description": f"{get_user_name(wp.created_by)} created a work plan",
+                "time": wp.created_at.strftime('%H:%M'),
+                "user_id": wp.created_by.id,
+                "icon": "fa-tasks",
+                "color": "var(--primary)"
+            })
+
+        # 🔟 HourlyReport submitted today
+        for hr in HourlyReport.objects.filter(created_at__date=today):
+            recent_activity.append({
+                "title": "Hourly Report",
+                "description": f"{get_user_name(hr.user)} submitted hourly report ({hr.report_hour}:00)",
+                "time": hr.created_at.strftime('%H:%M'),
+                "user_id": hr.user.id,
+                "icon": "fa-clock",
+                "color": "var(--info)"
+            })
+
+        # Sort all activities by time descending
+        recent_activity = sorted(recent_activity, key=lambda x: x['time'], reverse=True)
+
+        # ----------------------
+        # WORKPLAN SUMMARY
+        # ----------------------
+        workplans_today = WorkPlan.objects.filter(date=today)
+        total_workplans = workplans_today.count()
+        completed_workplans = workplans_today.filter(status='completed').count()
+        pending_workplans = total_workplans - completed_workplans
+
+        admin_workplans_count = WorkPlan.objects.filter(type='admin_created').count()
+        user_workplans_count = WorkPlan.objects.filter(type='user_created').count()
+
+        # ----------------------
+        # WORKTYPE & OPTION DATA
+        # ----------------------
+        worktype_count = WorkType.objects.count()
+        worktype_option_count = WorkTypeOption.objects.count()
+
+        # ----------------------
+        # HOURLY REPORT DATA
+        # ----------------------
+        hourly_total = HourlyReport.objects.count()
+        hourly_today = HourlyReport.objects.filter(report_date=today).count()
+        hourly_work_done = HourlyReport.objects.filter(work_done="yes").count()
+        hourly_work_not_done = HourlyReport.objects.filter(work_done="no").count()
+
+        # ----------------------
+        # WORK DETAIL DATA
+        # ----------------------
+        workdetail_total = WorkDetail.objects.count()
+        customer_response = {
+            "interested": WorkDetail.objects.filter(customer_response='interested').count(),
+            "not_interested": WorkDetail.objects.filter(customer_response='not_interested').count(),
+            "not_sure": WorkDetail.objects.filter(customer_response='not_sure').count(),
+        }
+        project_details = (
+            WorkDetail.objects.values('project__name')
+            .order_by('project__name')
+            .annotate(total=models.Count('id'))
+        )
+
+        # ----------------------
+        # FINAL RESPONSE
+        # ----------------------
+        return Response({
+            "total_users": total_users,
+            "checked_in_count": checked_in_count,
+            "not_checked_in_count": not_checked_in_count,
+            "recent_activity": recent_activity,
+
+            "total_workplans": total_workplans,
+            "completed_workplans": completed_workplans,
+            "pending_workplans": pending_workplans,
+            "admin_workplans_count": admin_workplans_count,
+            "user_workplans_count": user_workplans_count,
+
+            "worktype_count": worktype_count,
+            "worktype_option_count": worktype_option_count,
+
+            "hourly_report_total": hourly_total,
+            "hourly_report_today": hourly_today,
+            "hourly_work_done": hourly_work_done,
+            "hourly_work_not_done": hourly_work_not_done,
+
+            "workdetail_total": workdetail_total,
+            "customer_response": customer_response,
+            "project_wise_work_details": list(project_details),
+        })

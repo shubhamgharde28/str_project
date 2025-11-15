@@ -7,7 +7,8 @@ from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet, TargetAndSaleDashboardViewSet, AdminUserViewSet, AttendanceDashboardViewSet, WorkPlanTitleViewSet, AdminWorkPlanViewSet, UserWorkPlanViewSet, WorkTypeViewSet, WorkTypeOptionViewSet, HourlyReportViewSet, WorkDetailViewSet
+from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet, TargetAndSaleDashboardViewSet, AdminUserViewSet, AttendanceDashboardViewSet, WorkPlanTitleViewSet, AdminWorkPlanViewSet, UserWorkPlanViewSet, WorkTypeViewSet, WorkTypeOptionViewSet, HourlyReportViewSet, WorkDetailViewSet, DashboardViewSet
+
 
 
 
@@ -31,6 +32,7 @@ router.register(r'worktypes', WorkTypeViewSet, basename='worktype')
 router.register(r'worktype-options', WorkTypeOptionViewSet, basename='worktypeoption')
 router.register(r'hourly-reports', HourlyReportViewSet, basename='hourlyreport')
 router.register(r'work-details', WorkDetailViewSet, basename='workdetail')
+router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 
 
 urlpatterns = [
