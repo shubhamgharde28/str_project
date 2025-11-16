@@ -103,6 +103,8 @@ class Project(models.Model):
 
 
 
+
+
 class Attendance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendances')
     date = models.DateField(auto_now_add=True)

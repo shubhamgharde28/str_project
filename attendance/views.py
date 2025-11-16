@@ -232,56 +232,97 @@ from datetime import date
 from admin_section.models import MonthlyTarget, Sale
 from .serializers import UserTargetStatusSerializer
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
+from django.db.models import Sum
+from datetime import date
+
+from admin_section.models import MonthlyTarget, Sale
+# from .serializers import UserTargetStatusSerializer  # you can keep using serializer if needed
+
 class UserTargetStatusAPI(APIView):
-    # Add JWT Authentication and permission
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, user_id, year=None):
+    def get(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
 
-        # Optional: restrict to the user himself or admin
         if request.user != user and not request.user.is_staff:
             return Response({"error": "You are not allowed to view this user's target."},
                             status=status.HTTP_403_FORBIDDEN)
 
-        if not year:
-            year = date.today().year  # default to current year
+        year_param = request.query_params.get('year', None)
+        try:
+            year = int(year_param) if year_param else date.today().year
+        except ValueError:
+            return Response({"error": "Invalid year parameter."}, status=status.HTTP_400_BAD_REQUEST)
 
-        targets = MonthlyTarget.objects.filter(user=user, year=year).order_by('month')
+        # --- STEP 1: Read previous year's December carry (only once) ---
+        previous_year = year - 1
+        december_carry = 0
+
+        try:
+            prev_dec = MonthlyTarget.objects.get(user=user, year=previous_year, month=12)
+            dec_sales = Sale.objects.filter(user=user, year=previous_year, month=12).aggregate(
+                total_sold=Sum('area_sold')
+            )['total_sold'] or 0
+
+            if dec_sales >= prev_dec.target_area:
+                december_carry = dec_sales - prev_dec.target_area
+            else:
+                december_carry = 0
+
+        except MonthlyTarget.DoesNotExist:
+            december_carry = 0
+
+        # --- STEP 2: Process current year month-by-month ---
+        targets = list(MonthlyTarget.objects.filter(user=user, year=year).order_by('month'))
+
         monthly_status = []
-        carry_forward = 0
+        running_carry = 0
+        first_month = True
 
         for target in targets:
-            sales = Sale.objects.filter(user=user, year=year, month=target.month).aggregate(total_sold=Sum('area_sold'))
-            total_sold = sales['total_sold'] or 0
+            sales_agg = Sale.objects.filter(user=user, year=year, month=target.month).aggregate(
+                total_sold=Sum('area_sold')
+            )
+            total_sold = sales_agg["total_sold"] or 0
 
-            effective_sold = total_sold + carry_forward
+            # Apply previous December carry only for January
+            if first_month:
+                effective_sold = total_sold + december_carry
+                first_month = False
+            else:
+                effective_sold = total_sold + running_carry
 
             if effective_sold >= target.target_area:
-                status_str = 'green'
-                carry_forward = effective_sold - target.target_area
+                status_str = "green"
+                new_carry = effective_sold - target.target_area
             else:
-                status_str = 'red'
-                carry_forward = 0
+                status_str = "red"
+                new_carry = 0
 
             monthly_status.append({
-                'month': target.get_month_display(),
-                'target_area': target.target_area,
-                'sold_area': total_sold,
-                'status': status_str,
-                'carry_forward': carry_forward
+                "month": target.get_month_display(),
+                "target_area": float(target.target_area),
+                "sold_area": float(total_sold),
+                "status": status_str,
+                "carry_forward": float(new_carry),
             })
 
-        data = {
-            'user_id': user.id,
-            'user_email': user.email,
-            'year': year,
-            'monthly_status': monthly_status
-        }
+            running_carry = new_carry
 
-        serializer = UserTargetStatusSerializer(data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({
+            "user_id": user.id,
+            "user_email": user.email,
+            "year": year,
+            "monthly_status": monthly_status
+        }, status=status.HTTP_200_OK)
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -661,3 +702,178 @@ class ProjectListAPIView(APIView):
         projects = Project.objects.all()
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.decorators import action
+
+from datetime import date, datetime
+import calendar
+from decimal import Decimal, ROUND_HALF_UP
+from django.utils import timezone
+from django.db.models import Sum
+
+from attendance.models import Attendance
+from admin_section.models import SalaryConfig
+from admin_section.models import Sale
+from admin_section.models import MonthlyTarget
+
+
+class UserSalarySlipViewSet(viewsets.ViewSet):
+    """
+    Employee Salary Slip API (User Side)
+    """
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'])
+    def slip(self, request):
+        user = request.user
+        today = date.today()
+
+        try:
+            month = int(request.query_params.get("month", today.month))
+            year = int(request.query_params.get("year", today.year))
+        except:
+            return Response({"error": "Invalid month/year"}, status=400)
+
+        total_days = calendar.monthrange(year, month)[1]
+
+        # CONSTANTS
+        ALLOWED_LEAVES = 4
+        HALF = Decimal("0.5")
+        PENALTY_AMOUNT = Decimal("10000")
+        ROUND_Q = Decimal("0.01")
+
+        # -----------------------
+        # SALARY CONFIG
+        # -----------------------
+        try:
+            sal_cfg = SalaryConfig.objects.get(user=user)
+            monthly_salary = Decimal(str(sal_cfg.monthly_salary))
+            working_days = sal_cfg.working_days
+            daily_salary = (monthly_salary / Decimal(working_days)).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+        except SalaryConfig.DoesNotExist:
+            return Response({"error": "Salary configuration not found"}, status=404)
+
+        # -----------------------
+        # TARGET
+        # -----------------------
+        target_obj = MonthlyTarget.objects.filter(user=user, month=month, year=year).first()
+        target_area = float(target_obj.target_area) if target_obj else 0.0
+
+        # -----------------------
+        # SALES
+        # -----------------------
+        sale_data = Sale.objects.filter(user=user, month=month, year=year).aggregate(total=Sum("area_sold"))
+        sales_sum = float(sale_data["total"]) if sale_data["total"] else 0.0
+
+        # -----------------------
+        # ATTENDANCE LOOP
+        # -----------------------
+        present_days = 0
+        absent_days = 0
+        half_day_counter = Decimal("0")
+        attendance_days = []
+
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+            attendance = Attendance.objects.filter(user=user, date=current_date).first()
+
+            # FUTURE DAYS
+            if current_date > today:
+                attendance_days.append("-")
+                continue
+
+            if attendance and attendance.check_in_time:
+                present_days += 1
+                attendance_days.append("P")
+
+                # Late check
+                late_minutes = 0
+                is_late_half = False
+                try:
+                    expected = datetime.combine(current_date, sal_cfg.late_mark_after)
+                    if timezone.is_naive(expected) and timezone.is_aware(attendance.check_in_time):
+                        expected = timezone.make_aware(expected, attendance.check_in_time.tzinfo)
+
+                    if attendance.check_in_time > expected:
+                        delta = attendance.check_in_time - expected
+                        late_minutes = int(delta.total_seconds() // 60)
+                        if late_minutes > 15:
+                            is_late_half = True
+                except:
+                    pass
+
+                # Early leave check
+                is_early_half = False
+                if attendance.check_out_time:
+                    try:
+                        early_limit = datetime.combine(current_date, sal_cfg.early_leave_before)
+                        if timezone.is_naive(early_limit) and timezone.is_aware(attendance.check_out_time):
+                            early_limit = timezone.make_aware(early_limit, attendance.check_out_time.tzinfo)
+
+                        if attendance.check_out_time < early_limit:
+                            is_early_half = True
+                    except:
+                        pass
+
+                if is_late_half:
+                    half_day_counter += HALF
+                if is_early_half:
+                    half_day_counter += HALF
+
+            else:
+                absent_days += 1
+                attendance_days.append("A")
+
+        # -----------------------
+        # DEDUCTIONS
+        # -----------------------
+        unpaid_absences = max(0, absent_days - ALLOWED_LEAVES)
+
+        half_day_deduction = (half_day_counter * (daily_salary / 2)).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+        absence_deduction = (Decimal(unpaid_absences) * daily_salary).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+
+        target_penalty = Decimal("10000") if sales_sum < target_area else Decimal("0.00")
+
+        gross_salary = (Decimal(present_days) * daily_salary).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+        total_deduction = (half_day_deduction + absence_deduction + target_penalty).quantize(ROUND_Q)
+
+        net_salary = (gross_salary - total_deduction)
+        if net_salary < 0:
+            net_salary = Decimal("0.00")
+
+        # -----------------------
+        # FINAL RESPONSE
+        # -----------------------
+        slip = {
+            "month": month,
+            "year": year,
+
+            "monthly_salary": float(monthly_salary),
+            "working_days": working_days,
+            "daily_salary": float(daily_salary),
+
+            "present_days": present_days,
+            "absent_days": absent_days,
+            "allowed_leaves": ALLOWED_LEAVES,
+            "unpaid_absences": unpaid_absences,
+            "half_day_count": float(half_day_counter),
+
+            "half_day_deduction": float(half_day_deduction),
+            "absence_deduction": float(absence_deduction),
+            "target_penalty": float(target_penalty),
+
+            "gross_salary": float(gross_salary),
+            "total_deduction": float(total_deduction),
+            "net_salary": float(net_salary),
+
+            "sales_sum": sales_sum,
+            "target_area": target_area,
+
+            "attendance_calendar": attendance_days
+        }
+
+        return Response(slip, status=200)

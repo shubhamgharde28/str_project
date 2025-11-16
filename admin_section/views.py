@@ -1240,16 +1240,107 @@ from attendance.models import Attendance
 from .permissions import IsSuperUser
 
 
-class AttendanceDashboardViewSet(viewsets.ViewSet):
-    """
-    Superuser-only Attendance Dashboard APIs
-    """
+# admin_section/views.py
+# admin_section/views.py
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from datetime import date, datetime
+import calendar
+from decimal import Decimal, ROUND_HALF_UP
+from django.db.models import Sum
+from django.utils import timezone
 
+from geopy.geocoders import Nominatim
+from attendance.models import Attendance
+from .models import SalaryConfig
+from .models import MonthlyTarget
+from .models import Sale
+from .permissions import IsSuperUser
+from .serializers import SalaryConfigSerializer
+
+ROUND_Q = Decimal("0.01")
+HALF = Decimal("0.5")
+
+# --------------------------
+# SalaryConfig CRUD (ViewSet)
+# --------------------------
+class SalaryConfigViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        # superusers can list/create/update/delete; authenticated can access my_salary
+        if self.action in ['list', 'create', 'update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsAuthenticated, IsSuperUser]
+        return super().get_permissions()
+
+    def list(self, request):
+        configs = SalaryConfig.objects.all().order_by('user__username')
+        serializer = SalaryConfigSerializer(configs, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        try:
+            cfg = SalaryConfig.objects.get(pk=pk)
+            serializer = SalaryConfigSerializer(cfg)
+            return Response(serializer.data)
+        except SalaryConfig.DoesNotExist:
+            return Response({"error": "SalaryConfig not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def create(self, request):
+        serializer = SalaryConfigSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        try:
+            cfg = SalaryConfig.objects.get(pk=pk)
+        except SalaryConfig.DoesNotExist:
+            return Response({"error": "SalaryConfig not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = SalaryConfigSerializer(cfg, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def partial_update(self, request, pk=None):
+        try:
+            cfg = SalaryConfig.objects.get(pk=pk)
+        except SalaryConfig.DoesNotExist:
+            return Response({"error": "SalaryConfig not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = SalaryConfigSerializer(cfg, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        try:
+            cfg = SalaryConfig.objects.get(pk=pk)
+            cfg.delete()
+            return Response({"message": "Deleted."}, status=status.HTTP_204_NO_CONTENT)
+        except SalaryConfig.DoesNotExist:
+            return Response({"error": "SalaryConfig not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_salary(self, request):
+        cfg = getattr(request.user, 'salary_config', None)
+        if not cfg:
+            return Response({"error": "No salary config."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = SalaryConfigSerializer(cfg)
+        return Response(serializer.data)
+
+
+# --------------------------
+# Attendance Dashboard
+# --------------------------
+class AttendanceDashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated, IsSuperUser]
 
-    # =========================
-    # DAILY ATTENDANCE DASHBOARD
-    # =========================
     @action(detail=False, methods=['get'])
     def daily(self, request):
         today = date.today()
@@ -1258,21 +1349,18 @@ class AttendanceDashboardViewSet(viewsets.ViewSet):
         total_employees = users.count()
         present_count = 0
         absent_count = 0
-
         geolocator = Nominatim(user_agent="attendance_app")
 
         data = []
         for user in users:
-            attendance = Attendance.objects.filter(user=user, date=today).first()
-
-            if attendance and attendance.check_in_time:
+            att = Attendance.objects.filter(user=user, date=today).first()
+            if att and att.check_in_time:
                 status_label = 'Present'
                 present_count += 1
             else:
                 status_label = 'Absent'
                 absent_count += 1
 
-            # Get location names safely
             def get_location(lat, lon):
                 if lat and lon:
                     try:
@@ -1287,10 +1375,10 @@ class AttendanceDashboardViewSet(viewsets.ViewSet):
                 'username': user.username,
                 'email': user.email,
                 'status': status_label,
-                'check_in': attendance.check_in_time.strftime("%H:%M:%S") if attendance and attendance.check_in_time else '-',
-                'check_in_location': get_location(attendance.check_in_latitude, attendance.check_in_longitude) if attendance else '-',
-                'check_out': attendance.check_out_time.strftime("%H:%M:%S") if attendance and attendance.check_out_time else '-',
-                'check_out_location': get_location(attendance.check_out_latitude, attendance.check_out_longitude) if attendance else '-',
+                'check_in': att.check_in_time.strftime("%H:%M:%S") if att and att.check_in_time else '-',
+                'check_in_location': get_location(att.check_in_latitude, att.check_in_longitude) if att else '-',
+                'check_out': att.check_out_time.strftime("%H:%M:%S") if att and att.check_out_time else '-',
+                'check_out_location': get_location(att.check_out_latitude, att.check_out_longitude) if att else '-',
             })
 
         return Response({
@@ -1301,49 +1389,189 @@ class AttendanceDashboardViewSet(viewsets.ViewSet):
             'attendance_data': data
         }, status=status.HTTP_200_OK)
 
-    # =========================
-    # MONTHLY ATTENDANCE DASHBOARD
-    # =========================
+
     @action(detail=False, methods=['get'])
     def monthly(self, request):
+        """
+        Dynamic monthly salary + attendance report for all users.
+        Query params: ?month=MM&year=YYYY (defaults to current)
+        """
         today = date.today()
-        month = int(request.query_params.get('month', today.month))
-        year = int(request.query_params.get('year', today.year))
+        try:
+            month = int(request.query_params.get('month', today.month))
+            year = int(request.query_params.get('year', today.year))
+        except:
+            return Response({"error": "Invalid month/year."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not (1 <= month <= 12):
+            return Response({"error": "Month must be 1..12"}, status=status.HTTP_400_BAD_REQUEST)
 
         total_days = calendar.monthrange(year, month)[1]
-        start_date = date(year, month, 1)
-        end_date = date(year, month, total_days)
-
         users = User.objects.exclude(is_superuser=True).order_by('username')
-        attendance_summary = []
+        report = []
 
         for user in users:
-            daily_status = []
-            for day in range(1, total_days + 1):
-                current_date = date(year, month, day)
-                attendance = Attendance.objects.filter(user=user, date=current_date).first()
+            try:
+                # get salary config
+                sal_cfg = getattr(user, 'salary_config', None)
 
-                if attendance:
-                    daily_status.append('P')  # Present
+                if sal_cfg:
+                    monthly_salary = Decimal(str(sal_cfg.monthly_salary))
+                    # per-day salary = monthly / working_days (dynamic)
+                    try:
+                        working_days = int(sal_cfg.working_days) if sal_cfg.working_days > 0 else 1
+                    except:
+                        working_days = 1
+                    daily_salary = (monthly_salary / Decimal(working_days)).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
                 else:
-                    if current_date > today:
-                        daily_status.append('-')  # Future
-                    else:
-                        daily_status.append('A')  # Absent
+                    daily_salary = Decimal("0.00")
+                    working_days = 0
 
-            attendance_summary.append({
-                'user_id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'attendance_days': daily_status
-            })
+                # target & sales
+                mt = MonthlyTarget.objects.filter(user=user, month=month, year=year).first()
+                target_area = float(mt.target_area) if mt else None
+                sale_agg = Sale.objects.filter(user=user, month=month, year=year).aggregate(total=Sum('area_sold'))
+                sales_sum = float(sale_agg['total']) if sale_agg['total'] else 0.0
+
+                # dynamic policy values (fallbacks)
+                allowed_leaves = int(sal_cfg.allowed_leaves) if sal_cfg else 0
+                half_day_after_minutes = int(sal_cfg.half_day_after_minutes) if sal_cfg else 15
+                early_leave_minutes = int(sal_cfg.early_leave_minutes) if sal_cfg else 0
+                target_penalty_amount = Decimal(str(sal_cfg.target_penalty_amount)) if sal_cfg else Decimal("0.00")
+                late_per_minute = Decimal(str(sal_cfg.late_deduction_per_minute)) if sal_cfg else Decimal("0.00")
+                early_per_minute = Decimal(str(sal_cfg.early_leave_deduction_per_minute)) if sal_cfg else Decimal("0.00")
+                late_threshold_time = sal_cfg.late_mark_after if sal_cfg else None
+                early_threshold_time = sal_cfg.early_leave_before if sal_cfg else None
+
+                # iterate days
+                present_days = 0
+                absent_days = 0
+                attendance_days = []
+                half_day_count = Decimal("0")
+                per_minute_total_deduction = Decimal("0.00")  # optional per-minute deductions sum
+
+                for day in range(1, total_days + 1):
+                    current_date = date(year, month, day)
+                    att = Attendance.objects.filter(user=user, date=current_date).first()
+
+                    # future
+                    if current_date > today:
+                        attendance_days.append("-")
+                        continue
+
+                    if att and att.check_in_time:
+                        present_days += 1
+                        attendance_days.append("P")
+
+                        # compute late minutes
+                        late_minutes = 0
+                        if late_threshold_time:
+                            try:
+                                expected_in = datetime.combine(current_date, late_threshold_time)
+                                if timezone.is_naive(expected_in) and timezone.is_aware(att.check_in_time):
+                                    expected_in = timezone.make_aware(expected_in, att.check_in_time.tzinfo)
+                                if att.check_in_time > expected_in:
+                                    delta = att.check_in_time - expected_in
+                                    late_minutes = int(delta.total_seconds() // 60)
+                            except:
+                                late_minutes = 0
+
+                        # compute early leave minutes
+                        early_minutes = 0
+                        if att.check_out_time and early_threshold_time:
+                            try:
+                                expected_out = datetime.combine(current_date, early_threshold_time)
+                                if timezone.is_naive(expected_out) and timezone.is_aware(att.check_out_time):
+                                    expected_out = timezone.make_aware(expected_out, att.check_out_time.tzinfo)
+                                if att.check_out_time < expected_out:
+                                    delta = expected_out - att.check_out_time
+                                    early_minutes = int(delta.total_seconds() // 60)
+                            except:
+                                early_minutes = 0
+
+                        # half-day conditions
+                        if late_minutes > half_day_after_minutes:
+                            half_day_count += HALF
+                        if early_minutes > early_leave_minutes:
+                            half_day_count += HALF
+
+                        # per-minute deductions (optional): accumulate
+                        per_minute_total_deduction += (Decimal(late_minutes) * late_per_minute)
+                        per_minute_total_deduction += (Decimal(early_minutes) * early_per_minute)
+
+                    else:
+                        absent_days += 1
+                        attendance_days.append("A")
+
+                # unpaid absences beyond allowed_leaves
+                unpaid_absences = max(0, absent_days - allowed_leaves)
+
+                # half-day deduction: half_count * (daily_salary/2)
+                half_day_deduction = (half_day_count * (daily_salary * HALF)).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+
+                # absence deduction
+                absence_deduction = (Decimal(unpaid_absences) * daily_salary).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+
+                # target penalty
+                target_penalty = Decimal("0.00")
+                if target_area is not None:
+                    if sales_sum < target_area:
+                        target_penalty = target_penalty_amount
+
+                # optionally include per-minute deductions in total (if you want)
+                # Here I include per-minute deductions in total; if you don't want them, set to 0
+                per_minute_deduction = per_minute_total_deduction.quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+
+                # gross and net
+                gross = (Decimal(present_days) * daily_salary).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+                total_deduction = (half_day_deduction + absence_deduction + target_penalty + per_minute_deduction).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+                net = (gross - total_deduction)
+                if net < 0:
+                    net = Decimal("0.00")
+
+                report.append({
+                    "user_id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+
+                    "present_days": present_days,
+                    "absent_days": absent_days,
+                    "allowed_leaves": allowed_leaves,
+                    "unpaid_absences": unpaid_absences,
+
+                    "half_day_count": float(half_day_count),
+                    "daily_salary": float(daily_salary),
+
+                    "half_day_deduction": float(half_day_deduction),
+                    "absence_deduction": float(absence_deduction),
+                    "per_minute_deduction": float(per_minute_deduction),
+                    "target_penalty": float(target_penalty),
+
+                    "gross_salary": float(gross),
+                    "total_deduction": float(total_deduction),
+                    "net_salary": float(net),
+
+                    "sales_sum": sales_sum,
+                    "target_area": target_area,
+
+                    "attendance_days": attendance_days
+                })
+
+            except Exception as e:
+                report.append({
+                    "user_id": user.id,
+                    "username": user.username,
+                    "error": str(e)
+                })
 
         return Response({
-            'month': month,
-            'year': year,
-            'days_in_month': list(range(1, total_days + 1)),
-            'attendance_summary': attendance_summary
+            "month": month,
+            "year": year,
+            "days_in_month": list(range(1, total_days + 1)),
+            "salary_report": report
         }, status=status.HTTP_200_OK)
+
+
 
 
 # admin_section/views/workplan_api.py
@@ -1520,6 +1748,34 @@ class WorkDetailViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return WorkDetail.objects.select_related('hourly_report', 'work_type_option', 'project')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,17 +1,23 @@
 from django.urls import path, include
 
 
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, PendingHourlyReportCheckView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, PendingHourlyReportCheckView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet
 
 
 
 
 
+
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r"user-salary-slip", UserSalarySlipViewSet, basename="user-salary-slip")
 
 
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
+    path('', include(router.urls)),
     path('signup/', SignupView.as_view(), name='signup'),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
     path('login/', LoginView.as_view(), name='login'),

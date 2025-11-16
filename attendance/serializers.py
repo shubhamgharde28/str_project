@@ -119,6 +119,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
             return obj.user.profile.department
         return None
 
+
+
 from rest_framework import serializers
 from .models import WorkPlan, WorkPlanTitle
 from django.contrib.auth.models import User
