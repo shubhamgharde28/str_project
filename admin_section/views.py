@@ -1580,7 +1580,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from attendance.models import WorkPlanTitle
-from admin_section.serializers import WorkPlanTitleSerializer
+from admin_section.serializers import WorkPlanTitleSerializer_admin
 from admin_section.permissions import IsSuperUser
 
 
@@ -1589,7 +1589,7 @@ class WorkPlanTitleViewSet(viewsets.ModelViewSet):
     Superuser-only CRUD for WorkPlan Titles
     """
     queryset = WorkPlanTitle.objects.all().order_by('title')
-    serializer_class = WorkPlanTitleSerializer
+    serializer_class = WorkPlanTitleSerializer_admin
     permission_classes = [IsAuthenticated, IsSuperUser]
 
     def create(self, request, *args, **kwargs):
@@ -1624,7 +1624,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from attendance.models import WorkPlan
-from admin_section.serializers import WorkPlanSerializer
+from admin_section.serializers import WorkPlanSerializer_admin
 from admin_section.permissions import IsSuperUser
 
 
@@ -1632,7 +1632,7 @@ class AdminWorkPlanViewSet(viewsets.ModelViewSet):
     """
     API for Superusers to manage Admin-Created WorkPlans
     """
-    serializer_class = WorkPlanSerializer
+    serializer_class = WorkPlanSerializer_admin
     permission_classes = [IsAuthenticated, IsSuperUser]
 
     def get_queryset(self):
@@ -1672,10 +1672,10 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from attendance.models import WorkPlan
-from .serializers import WorkPlanSerializer
+from .serializers import WorkPlanSerializer_admin
 
 class UserWorkPlanViewSet(viewsets.ModelViewSet):
-    serializer_class = WorkPlanSerializer
+    serializer_class = WorkPlanSerializer_admin
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -1709,28 +1709,28 @@ class UserWorkPlanViewSet(viewsets.ModelViewSet):
 from rest_framework import viewsets, permissions
 from attendance.models import WorkType, WorkTypeOption, HourlyReport, WorkDetail
 from .serializers import (
-    WorkTypeSerializer, WorkTypeOptionSerializer,
-    HourlyReportSerializer, WorkDetailSerializer
+    WorkTypeSerializer_admin, WorkTypeOptionSerializer_admin,
+    HourlyReportSerializer_admin, WorkDetailSerializer_admin
 )
 
 
 # 🧩 WorkType CRUD
 class WorkTypeViewSet(viewsets.ModelViewSet):
     queryset = WorkType.objects.all()
-    serializer_class = WorkTypeSerializer
+    serializer_class = WorkTypeSerializer_admin
     permission_classes = [permissions.IsAuthenticated]
 
 
 # 🧩 WorkTypeOption CRUD
 class WorkTypeOptionViewSet(viewsets.ModelViewSet):
     queryset = WorkTypeOption.objects.all()
-    serializer_class = WorkTypeOptionSerializer
+    serializer_class = WorkTypeOptionSerializer_admin
     permission_classes = [permissions.IsAuthenticated]
 
 
 # 🧩 HourlyReport CRUD
 class HourlyReportViewSet(viewsets.ModelViewSet):
-    serializer_class = HourlyReportSerializer
+    serializer_class = HourlyReportSerializer_admin
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -1743,7 +1743,7 @@ class HourlyReportViewSet(viewsets.ModelViewSet):
 
 # 🧩 WorkDetail CRUD
 class WorkDetailViewSet(viewsets.ModelViewSet):
-    serializer_class = WorkDetailSerializer
+    serializer_class = WorkDetailSerializer_admin
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):

@@ -30,9 +30,11 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('admin_section.urls')),
-    path('api/', include('attendance.urls')),
     path('api/admin_section/', include('admin_section.urls')),
+
     path('api/attendance/', include('attendance.urls')),
+    path('api/', include('attendance.urls')),
+    
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 

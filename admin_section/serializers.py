@@ -87,7 +87,7 @@ class SalaryConfigSerializer(serializers.ModelSerializer):
 from rest_framework import serializers
 from attendance.models import WorkPlanTitle
 
-class WorkPlanTitleSerializer(serializers.ModelSerializer):
+class WorkPlanTitleSerializer_admin(serializers.ModelSerializer):
     class Meta:
         model = WorkPlanTitle
         fields = ['id', 'title', 'description']
@@ -98,7 +98,7 @@ class WorkPlanTitleSerializer(serializers.ModelSerializer):
 from rest_framework import serializers
 from attendance.models import WorkPlan
 
-class WorkPlanSerializer(serializers.ModelSerializer):
+class WorkPlanSerializer_admin(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
 
     class Meta:
@@ -115,13 +115,13 @@ from attendance.models import WorkType, WorkTypeOption, HourlyReport, WorkDetail
 from django.contrib.auth.models import User
 
 
-class WorkTypeSerializer(serializers.ModelSerializer):
+class WorkTypeSerializer_admin(serializers.ModelSerializer):
     class Meta:
         model = WorkType
         fields = '__all__'
 
 
-class WorkTypeOptionSerializer(serializers.ModelSerializer):
+class WorkTypeOptionSerializer_admin(serializers.ModelSerializer):
     work_type_name = serializers.CharField(source='work_type.name', read_only=True)
 
     class Meta:
@@ -129,7 +129,7 @@ class WorkTypeOptionSerializer(serializers.ModelSerializer):
         fields = ['id', 'work_type', 'work_type_name', 'name', 'description']
 
 
-class HourlyReportSerializer(serializers.ModelSerializer):
+class HourlyReportSerializer_admin(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.username', read_only=True)
     
     class Meta:
@@ -142,7 +142,7 @@ class HourlyReportSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
 
-class WorkDetailSerializer(serializers.ModelSerializer):
+class WorkDetailSerializer_admin(serializers.ModelSerializer):
     hourly_report_info = serializers.CharField(source='hourly_report.__str__', read_only=True)
     work_type_option_name = serializers.CharField(source='work_type_option.name', read_only=True)
     project_name = serializers.CharField(source='project.name', read_only=True)
