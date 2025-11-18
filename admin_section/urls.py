@@ -11,6 +11,37 @@ from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet, T
 
 
 
+from django.urls import path
+from .views import SalaryConfigViewSet, AttendanceDashboardViewSet
+
+salaryconfig_list = SalaryConfigViewSet.as_view({
+    'get': 'list',
+    'post': 'create'
+})
+salaryconfig_detail = SalaryConfigViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    'delete': 'destroy'
+})
+salaryconfig_my = SalaryConfigViewSet.as_view({
+    'get': 'my_salary'
+})
+
+attendance_daily = AttendanceDashboardViewSet.as_view({
+    'get': 'daily'
+})
+attendance_monthly = AttendanceDashboardViewSet.as_view({
+    'get': 'monthly'
+})
+
+urlpatterns = [
+    path('salary-config/', salaryconfig_list, name='salaryconfig-list'),
+    path('salary-config/<int:pk>/', salaryconfig_detail, name='salaryconfig-detail'),
+    path('salary-config/my/', salaryconfig_my, name='salaryconfig-my'),
+    path('attendance/daily/', attendance_daily, name='attendance-daily'),
+    path('attendance/monthly/', attendance_monthly, name='attendance-monthly'),
+]
 
 
 

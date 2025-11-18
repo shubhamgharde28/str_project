@@ -716,9 +716,15 @@ from django.utils import timezone
 from django.db.models import Sum
 
 from attendance.models import Attendance
-from admin_section.models import SalaryConfig
-from admin_section.models import Sale
-from admin_section.models import MonthlyTarget
+from admin_section.models import SalaryConfig, Sale, MonthlyTarget
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.db.models import Sum
+from datetime import date, datetime
+from decimal import Decimal, ROUND_HALF_UP
+import calendar
 
 
 class UserSalarySlipViewSet(viewsets.ViewSet):
@@ -732,6 +738,9 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
         user = request.user
         today = date.today()
 
+        # -----------------------
+        # Month & Year Input
+        # -----------------------
         try:
             month = int(request.query_params.get("month", today.month))
             year = int(request.query_params.get("year", today.year))
@@ -743,34 +752,39 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
         # CONSTANTS
         ALLOWED_LEAVES = 4
         HALF = Decimal("0.5")
-        PENALTY_AMOUNT = Decimal("10000")
         ROUND_Q = Decimal("0.01")
 
         # -----------------------
         # SALARY CONFIG
         # -----------------------
         try:
-            sal_cfg = SalaryConfig.objects.get(user=user)
-            monthly_salary = Decimal(str(sal_cfg.monthly_salary))
-            working_days = sal_cfg.working_days
-            daily_salary = (monthly_salary / Decimal(working_days)).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+            cfg = SalaryConfig.objects.get(user=user)
+            monthly_salary = Decimal(str(cfg.monthly_salary))
+            working_days = cfg.working_days
+
+            daily_salary = (monthly_salary / Decimal(working_days)).quantize(
+                ROUND_Q, rounding=ROUND_HALF_UP
+            )
         except SalaryConfig.DoesNotExist:
             return Response({"error": "Salary configuration not found"}, status=404)
 
         # -----------------------
-        # TARGET
+        # SALES TARGET
         # -----------------------
-        target_obj = MonthlyTarget.objects.filter(user=user, month=month, year=year).first()
+        target_obj = MonthlyTarget.objects.filter(
+            user=user, month=month, year=year
+        ).first()
+
         target_area = float(target_obj.target_area) if target_obj else 0.0
 
-        # -----------------------
-        # SALES
-        # -----------------------
-        sale_data = Sale.objects.filter(user=user, month=month, year=year).aggregate(total=Sum("area_sold"))
+        sale_data = Sale.objects.filter(
+            user=user, month=month, year=year
+        ).aggregate(total=Sum("area_sold"))
+
         sales_sum = float(sale_data["total"]) if sale_data["total"] else 0.0
 
         # -----------------------
-        # ATTENDANCE LOOP
+        # ATTENDANCE PROCESSING
         # -----------------------
         present_days = 0
         absent_days = 0
@@ -779,74 +793,73 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
 
         for day in range(1, total_days + 1):
             current_date = date(year, month, day)
-            attendance = Attendance.objects.filter(user=user, date=current_date).first()
+            att = Attendance.objects.filter(user=user, date=current_date).first()
 
-            # FUTURE DAYS
+            # Future dates
             if current_date > today:
                 attendance_days.append("-")
                 continue
 
-            if attendance and attendance.check_in_time:
-                present_days += 1
-                attendance_days.append("P")
-
-                # Late check
-                late_minutes = 0
-                is_late_half = False
-                try:
-                    expected = datetime.combine(current_date, sal_cfg.late_mark_after)
-                    if timezone.is_naive(expected) and timezone.is_aware(attendance.check_in_time):
-                        expected = timezone.make_aware(expected, attendance.check_in_time.tzinfo)
-
-                    if attendance.check_in_time > expected:
-                        delta = attendance.check_in_time - expected
-                        late_minutes = int(delta.total_seconds() // 60)
-                        if late_minutes > 15:
-                            is_late_half = True
-                except:
-                    pass
-
-                # Early leave check
-                is_early_half = False
-                if attendance.check_out_time:
-                    try:
-                        early_limit = datetime.combine(current_date, sal_cfg.early_leave_before)
-                        if timezone.is_naive(early_limit) and timezone.is_aware(attendance.check_out_time):
-                            early_limit = timezone.make_aware(early_limit, attendance.check_out_time.tzinfo)
-
-                        if attendance.check_out_time < early_limit:
-                            is_early_half = True
-                    except:
-                        pass
-
-                if is_late_half:
-                    half_day_counter += HALF
-                if is_early_half:
-                    half_day_counter += HALF
-
-            else:
+            # ABSENT
+            if not att or not att.check_in_time:
                 absent_days += 1
                 attendance_days.append("A")
+                continue
+
+            # PRESENT
+            present_days += 1
+            attendance_days.append("P")
+
+            is_late_half = False
+            is_early_half = False
+
+            # Late Check
+            if att.check_in_time and att.check_in_time.time() > cfg.late_allowed_time:
+                is_late_half = True
+
+            # Early Leave Check
+            if att.check_out_time and att.check_out_time.time() < cfg.early_leave_allowed_time:
+                is_early_half = True
+
+            # Apply half-day rules
+            if is_late_half and is_early_half:
+                half_day_counter += Decimal("1.0")  # FULL DAY
+            elif is_late_half:
+                half_day_counter += HALF
+            elif is_early_half:
+                half_day_counter += HALF
 
         # -----------------------
         # DEDUCTIONS
         # -----------------------
         unpaid_absences = max(0, absent_days - ALLOWED_LEAVES)
 
-        half_day_deduction = (half_day_counter * (daily_salary / 2)).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
-        absence_deduction = (Decimal(unpaid_absences) * daily_salary).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
+        half_day_deduction = (half_day_counter * (daily_salary / 1)).quantize(
+            ROUND_Q, rounding=ROUND_HALF_UP
+        )
 
-        target_penalty = Decimal("10000") if sales_sum < target_area else Decimal("0.00")
+        absence_deduction = (Decimal(unpaid_absences) * daily_salary).quantize(
+            ROUND_Q, rounding=ROUND_HALF_UP
+        )
 
-        gross_salary = (Decimal(present_days) * daily_salary).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
-        total_deduction = (half_day_deduction + absence_deduction + target_penalty).quantize(ROUND_Q)
+        target_penalty = Decimal("0.00")
+        if target_area > 0 and sales_sum < target_area:
+            target_penalty = Decimal(str(cfg.target_penalty_amount))
 
-        net_salary = (gross_salary - total_deduction)
+        gross_salary = (Decimal(present_days) * daily_salary).quantize(
+            ROUND_Q, rounding=ROUND_HALF_UP
+        )
+
+        total_deduction = (half_day_deduction + absence_deduction + target_penalty).quantize(
+            ROUND_Q
+        )
+
+        net_salary = gross_salary - total_deduction
         if net_salary < 0:
             net_salary = Decimal("0.00")
 
         # -----------------------
-        # FINAL RESPONSE
+        # RESPONSE
         # -----------------------
         slip = {
             "month": month,
@@ -860,18 +873,18 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
             "absent_days": absent_days,
             "allowed_leaves": ALLOWED_LEAVES,
             "unpaid_absences": unpaid_absences,
-            "half_day_count": float(half_day_counter),
 
+            "half_day_count": float(half_day_counter),
             "half_day_deduction": float(half_day_deduction),
             "absence_deduction": float(absence_deduction),
+
+            "target_area": target_area,
+            "sales_sum": sales_sum,
             "target_penalty": float(target_penalty),
 
             "gross_salary": float(gross_salary),
             "total_deduction": float(total_deduction),
             "net_salary": float(net_salary),
-
-            "sales_sum": sales_sum,
-            "target_area": target_area,
 
             "attendance_calendar": attendance_days
         }

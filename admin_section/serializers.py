@@ -62,25 +62,18 @@ class SalaryConfigSerializer(serializers.ModelSerializer):
         model = SalaryConfig
         fields = [
             'id', 'user', 'monthly_salary', 'working_days',
-
-            'late_mark_after', 'half_day_after_minutes',
-            'late_deduction_per_minute',
-
-            'early_leave_before', 'early_leave_minutes',
-            'early_leave_deduction_per_minute',
-
-            'allowed_leaves', 'target_penalty_amount',
-
+            'late_allowed_time', 'early_leave_allowed_time',
+            'target_area', 'target_penalty_amount',
             'daily_salary'
         ]
         read_only_fields = ['daily_salary']
 
     def get_daily_salary(self, obj):
         try:
-            val = obj.daily_salary()
-            return round(float(val), 2)
+            return round(float(obj.daily_salary()), 2)
         except Exception:
             return 0.0
+
 
 
 # admin_section/serializers.py
