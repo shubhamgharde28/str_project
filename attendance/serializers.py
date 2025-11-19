@@ -1,7 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
+from .models import HourlyReport, WorkDetail, WorkType, WorkTypeOption, Attendance, WorkPlanTitle, UserProfile, WorkPlan, Project
 
 class SignupSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -15,16 +15,9 @@ class SignupSerializer(serializers.Serializer):
             raise serializers.ValidationError("User with this email already exists.")
         return data
 
-
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField(max_length=6)
-
-
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -53,19 +46,10 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
-from rest_framework import serializers
-from .models import UserProfile
-
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         exclude = ('user',)
-
-
-
-from rest_framework import serializers
-from admin_section.models import MonthlyTarget, Sale
-from django.contrib.auth.models import User
 
 class MonthlyStatusSerializer(serializers.Serializer):
     month = serializers.CharField()
@@ -79,10 +63,6 @@ class UserTargetStatusSerializer(serializers.Serializer):
     user_email = serializers.EmailField()
     year = serializers.IntegerField()
     monthly_status = MonthlyStatusSerializer(many=True)
-
-
-from rest_framework import serializers
-from .models import Attendance, UserProfile
 
 class AttendanceSerializer(serializers.ModelSerializer):
     first_name = serializers.SerializerMethodField()
@@ -119,36 +99,19 @@ class AttendanceSerializer(serializers.ModelSerializer):
             return obj.user.profile.department
         return None
 
-
-
-from rest_framework import serializers
-from .models import WorkPlan, WorkPlanTitle
-from django.contrib.auth.models import User
-
-
-
-from rest_framework import serializers
-
 class TargetSummarySerializer(serializers.Serializer):
     total_target = serializers.FloatField()
     total_sale = serializers.FloatField()
     remaining_target = serializers.FloatField()
-
-
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import WorkPlan, WorkPlanTitle
-
 
 class WorkPlanTitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkPlanTitle
         fields = ['id', 'title', 'description']
 
-
 class WorkPlanSerializer(serializers.ModelSerializer):
     titles = WorkPlanTitleSerializer(many=True, read_only=True)
-    created_by = serializers.StringRelatedField(read_only=True)  # shows username
+    created_by = serializers.StringRelatedField(read_only=True)  
     coworkers = serializers.SerializerMethodField()
 
     class Meta:
@@ -156,15 +119,12 @@ class WorkPlanSerializer(serializers.ModelSerializer):
         fields = ['id', 'titles', 'description', 'status', 'date', 'created_at', 'created_by', 'coworkers']
 
     def get_coworkers(self, obj):
-        # Return detailed coworker info (id, username, email)
         return [
             {"id": u.id, "username": u.username, "email": u.email}
             for u in obj.coworkers.all()
         ]
 
-
 class WorkPlanCreateSerializer(serializers.ModelSerializer):
-    # Accept titles as IDs and coworkers as IDs during creation
     titles = serializers.PrimaryKeyRelatedField(
         many=True, queryset=WorkPlanTitle.objects.all()
     )
@@ -191,12 +151,8 @@ class WorkPlanCreateSerializer(serializers.ModelSerializer):
             workplan.titles.set(titles)
         return workplan
 
-    # <-- this makes the POST response use the full nested WorkPlanSerializer representation
     def to_representation(self, instance):
         return WorkPlanSerializer(instance, context=self.context).data
-
-from rest_framework import serializers
-from .models import HourlyReport, WorkDetail, WorkType, WorkTypeOption
 
 class WorkTypeOptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -210,12 +166,6 @@ class WorkTypeSerializer(serializers.ModelSerializer):
         model = WorkType
         fields = ['id', 'name', 'description', 'options']
 
-from rest_framework import serializers
-from .models import WorkDetail, WorkTypeOption
-from rest_framework import serializers
-from .models import WorkDetail, WorkTypeOption, Project
-
-
 class WorkDetailSerializer(serializers.ModelSerializer):
     work_type_option = serializers.PrimaryKeyRelatedField(queryset=WorkTypeOption.objects.all())
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all(), allow_null=True, required=False)
@@ -223,8 +173,6 @@ class WorkDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkDetail
         exclude = ['hourly_report']
-
-
 
 class HourlyReportSerializer(serializers.ModelSerializer):
     work_types = WorkTypeSerializer(many=True, read_only=True)
@@ -234,12 +182,6 @@ class HourlyReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = HourlyReport
         fields = '__all__'
-
-from rest_framework import serializers
-from .models import HourlyReport, WorkDetail, WorkType, WorkTypeOption
-
-from rest_framework import serializers
-from .models import HourlyReport, WorkDetail, WorkType, WorkTypeOption
 
 class HourlyReportCreateSerializer(serializers.ModelSerializer):
     work_types = serializers.PrimaryKeyRelatedField(queryset=WorkType.objects.all())
@@ -265,28 +207,19 @@ class HourlyReportCreateSerializer(serializers.ModelSerializer):
         work_type = validated_data.pop('work_types')
         work_type_option = validated_data.pop('work_type_options')
 
-        # Create main HourlyReport entry
         report = HourlyReport.objects.create(user=self.context['request'].user, **validated_data)
 
-        # Assign single selections as ManyToMany
         report.work_types.set([work_type])
         report.work_type_options.set([work_type_option])
 
-        # Create linked WorkDetail entries
         for detail_data in details_data:
             WorkDetail.objects.create(hourly_report=report, **detail_data)
 
         return report
 
-    # ✅ Ensure the response is JSON serializable
     def to_representation(self, instance):
         from .serializers import HourlyReportSerializer
         return HourlyReportSerializer(instance, context=self.context).data
-
-
-# serializers.py
-from rest_framework import serializers
-from .models import Project
 
 class ProjectSerializer(serializers.ModelSerializer):
     remaining_plots = serializers.ReadOnlyField()

@@ -1,20 +1,10 @@
 from django.urls import path, include
-
-
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, PendingHourlyReportCheckView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet
-
-
-
-
-
-
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenRefreshView
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI
 
 router = DefaultRouter()
 router.register(r"user-salary-slip", UserSalarySlipViewSet, basename="user-salary-slip")
-
-
-from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -45,6 +35,7 @@ urlpatterns = [
 
     path('hourly-reports/', HourlyReportListView.as_view(), name='hourly-report-list'),
     path('hourly-reports/create/', HourlyReportCreateView.as_view(), name='hourly-report-create'),
-    path('hourly-reports/pending/', PendingHourlyReportCheckView.as_view(), name='hourly-report-pending'),
 
+
+    path("simple-hourly-check/", SimpleHourlyReportCheckAPI.as_view()),
    ]

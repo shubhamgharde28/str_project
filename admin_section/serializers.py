@@ -1,6 +1,8 @@
+# admin_section/serializers.py
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import MonthlyTarget, Sale
+from .models import MonthlyTarget, Sale, SalaryConfig
+from attendance.models import WorkType, WorkTypeOption, HourlyReport, WorkDetail, WorkPlan, WorkPlanTitle, UserProfile
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,12 +29,6 @@ class SaleSerializer(serializers.ModelSerializer):
         model = Sale
         fields = ['id', 'user', 'user_id', 'month', 'year', 'area_sold']
 
-
-# admin_section/serializers.py
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from attendance.models import UserProfile
-
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
@@ -48,12 +44,6 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'is_active', 'is_superuser', 'date_joined', 'profile']
-
-
-# serializers.py
-# salary/serializers.py
-from rest_framework import serializers
-from .models import SalaryConfig
 
 class SalaryConfigSerializer(serializers.ModelSerializer):
     daily_salary = serializers.SerializerMethodField(read_only=True)
@@ -74,22 +64,10 @@ class SalaryConfigSerializer(serializers.ModelSerializer):
         except Exception:
             return 0.0
 
-
-
-# admin_section/serializers.py
-from rest_framework import serializers
-from attendance.models import WorkPlanTitle
-
 class WorkPlanTitleSerializer_admin(serializers.ModelSerializer):
     class Meta:
         model = WorkPlanTitle
         fields = ['id', 'title', 'description']
-
-
-
-# admin_section/serializers.py
-from rest_framework import serializers
-from attendance.models import WorkPlan
 
 class WorkPlanSerializer_admin(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
@@ -102,17 +80,10 @@ class WorkPlanSerializer_admin(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_by', 'type', 'created_at']
 
-
-from rest_framework import serializers
-from attendance.models import WorkType, WorkTypeOption, HourlyReport, WorkDetail
-from django.contrib.auth.models import User
-
-
 class WorkTypeSerializer_admin(serializers.ModelSerializer):
     class Meta:
         model = WorkType
         fields = '__all__'
-
 
 class WorkTypeOptionSerializer_admin(serializers.ModelSerializer):
     work_type_name = serializers.CharField(source='work_type.name', read_only=True)
@@ -120,7 +91,6 @@ class WorkTypeOptionSerializer_admin(serializers.ModelSerializer):
     class Meta:
         model = WorkTypeOption
         fields = ['id', 'work_type', 'work_type_name', 'name', 'description']
-
 
 class HourlyReportSerializer_admin(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.username', read_only=True)
@@ -133,7 +103,6 @@ class HourlyReportSerializer_admin(serializers.ModelSerializer):
             'work_types', 'work_type_options', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
-
 
 class WorkDetailSerializer_admin(serializers.ModelSerializer):
     hourly_report_info = serializers.CharField(source='hourly_report.__str__', read_only=True)

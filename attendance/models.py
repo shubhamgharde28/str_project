@@ -2,7 +2,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Optional — if you want to keep record of OTPs
 class EmailOTP(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_otps')
     otp = models.CharField(max_length=6)
@@ -11,10 +10,6 @@ class EmailOTP(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.otp}"
-
-
-from django.db import models
-from django.contrib.auth.models import User
 
 GENDER_CHOICES = (
     ('male', 'Male'),
@@ -45,20 +40,11 @@ class UserProfile(models.Model):
     city = models.CharField(max_length=50)
     state = models.CharField(max_length=50)
     pincode = models.CharField(max_length=10)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.email} Profile"
-
-
-from django.db import models
-from django.contrib.auth.models import User
-
-
-from django.db import models
-from django.contrib.auth.models import User
 
 class Project(models.Model):
     PROJECT_TYPE_CHOICES = [
@@ -71,21 +57,17 @@ class Project(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='projects')
     name = models.CharField(max_length=150, unique=True)
     project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default='plotting')
-    description = models.TextField(blank=True, null=True)
-    
+    description = models.TextField(blank=True, null=True)  
     total_plots = models.PositiveIntegerField(default=0)
     available_plots = models.PositiveIntegerField(default=0)
     sold_plots = models.PositiveIntegerField(default=0)
-
     address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
-
     launch_date = models.DateField(blank=True, null=True)
     expected_completion_date = models.DateField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -100,10 +82,6 @@ class Project(models.Model):
     @property
     def remaining_plots(self):
         return self.total_plots - self.sold_plots
-
-
-
-
 
 class Attendance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendances')
@@ -122,18 +100,12 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.user.email} - {self.date}"
 
-
-from django.db import models
-from django.contrib.auth.models import User
-
-
 class WorkPlanTitle(models.Model):
     title = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.title
-
 
 class WorkPlan(models.Model):
     STATUS_CHOICES = [
@@ -159,12 +131,6 @@ class WorkPlan(models.Model):
     def __str__(self):
         return f"{self.created_by.username} ({self.date})"
 
-
-
-from django.db import models
-from django.contrib.auth.models import User
-
-# Customer response choices
 CUSTOMER_RESPONSE_CHOICES = [
     ('interested', 'Interested'),
     ('not_interested', 'Not Interested'),
@@ -198,14 +164,10 @@ class HourlyReport(models.Model):
     report_hour = models.IntegerField()  # Hour 0-23
     location_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     location_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    
     work_done = models.CharField(max_length=3, choices=YES_NO_CHOICES)
     reason_not_done = models.TextField(blank=True, null=True)
-
-    # Work types and options selected
     work_types = models.ManyToManyField(WorkType, blank=True, related_name='hourly_reports')
     work_type_options = models.ManyToManyField(WorkTypeOption, blank=True, related_name='hourly_reports')
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -216,14 +178,11 @@ class WorkDetail(models.Model):
     hourly_report = models.ForeignKey(HourlyReport, on_delete=models.CASCADE, related_name='details')
     work_type_option = models.ForeignKey(WorkTypeOption, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='work_details', null=True, blank=True)  # ✅ NEW FIELD
-
     customer_name = models.CharField(max_length=100, blank=True, null=True)
     mobile_number = models.CharField(max_length=15, blank=True, null=True)
     plot_number = models.CharField(max_length=50, blank=True, null=True)
-    
     customer_response = models.CharField(max_length=15, choices=CUSTOMER_RESPONSE_CHOICES)
     reason_not_interested = models.TextField(blank=True, null=True)
-
     site_visit_done = models.BooleanField(default=False)
     meeting_done = models.BooleanField(default=False)
     booking_done = models.BooleanField(default=False)
@@ -232,3 +191,4 @@ class WorkDetail(models.Model):
     def __str__(self):
         project_name = self.project.name if self.project else "No Project"
         return f"{self.hourly_report} - {project_name} - {self.work_type_option.name}"
+    

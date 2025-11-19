@@ -1,5 +1,7 @@
+# admin_section/models.py
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import time
 
 MONTH_CHOICES = [
     (1, "January"), (2, "February"), (3, "March"), (4, "April"),
@@ -11,7 +13,7 @@ class MonthlyTarget(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='monthly_targets')
     month = models.IntegerField(choices=MONTH_CHOICES)
     year = models.IntegerField()
-    target_area = models.FloatField(default=1500)  # sq ft target
+    target_area = models.FloatField(default=1500)  
     carry_forward = models.FloatField(default=0)
 
     class Meta:
@@ -21,43 +23,25 @@ class MonthlyTarget(models.Model):
     def __str__(self):
         return f"{self.user.email} - {self.get_month_display()} {self.year}"
 
-
 class Sale(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sales')
     month = models.IntegerField(choices=MONTH_CHOICES)
     year = models.IntegerField()
-    area_sold = models.FloatField()  # sq ft sold
+    area_sold = models.FloatField()  
 
     class Meta:
-        unique_together = ('user', 'month', 'year')  # ek user ke liye ek month ek hi sale
+        unique_together = ('user', 'month', 'year')  
         ordering = ['year', 'month']
 
     def __str__(self):
         return f"{self.user.email} - {self.get_month_display()} {self.year} sold {self.area_sold} sq ft"
 
-
-# models.py
-from django.db import models
-from django.contrib.auth.models import User
-from datetime import time
-
-# salary/models.py
-
-from django.db import models
-from django.contrib.auth.models import User
-from datetime import time
-
 class SalaryConfig(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='salary_config')
-
     monthly_salary = models.DecimalField(max_digits=12, decimal_places=2)
     working_days = models.PositiveIntegerField(default=26)
-
-    # Attendance rules (times)
     late_allowed_time = models.TimeField(default=time(9, 0))   # after this -> late
-    early_leave_allowed_time = models.TimeField(default=time(17, 0))  # before this -> early leave
-
-    # Sales Target (optional)
+    early_leave_allowed_time = models.TimeField(default=time(17, 0)) 
     target_area = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     target_penalty_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
@@ -72,6 +56,3 @@ class SalaryConfig(models.Model):
 
     def __str__(self):
         return f"Salary Config for {self.user.username}"
-
-
-

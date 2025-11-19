@@ -1,21 +1,31 @@
-# views.py
+# attendance/views.py
 import random, string
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.auth import login
 from rest_framework.views import APIView
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import SignupSerializer, VerifyOTPSerializer, LoginSerializer
-import os
-
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from django.utils import timezone
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.shortcuts import get_object_or_404
+from django.db.models import Sum
+from rest_framework import permissions
+from django.db.models import Q
+from calendar import monthrange
+from datetime import date, timedelta
+import calendar
+from decimal import Decimal, ROUND_HALF_UP
+from rest_framework.decorators import action
+from .serializers import SignupSerializer, VerifyOTPSerializer, LoginSerializer, UserProfileSerializer, UserTargetStatusSerializer, WorkPlanSerializer, WorkPlanCreateSerializer,HourlyReportSerializer, HourlyReportCreateSerializer, AttendanceSerializer, ProjectSerializer, WorkTypeSerializer, WorkPlanTitleSerializer
+from .models import WorkPlan, HourlyReport, Attendance, Project, WorkType, WorkPlanTitle
+from admin_section.models import SalaryConfig, Sale, MonthlyTarget
 
 def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
-
 
 class SignupView(APIView):
     def post(self, request):
@@ -44,7 +54,6 @@ class SignupView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class VerifyOTPView(APIView):
     def post(self, request):
@@ -80,7 +89,6 @@ class VerifyOTPView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -94,12 +102,6 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -117,21 +119,6 @@ class LogoutView(APIView):
             return Response({
                 "error": "Invalid refresh token."
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        
-from django.utils import timezone
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.core.cache import cache
-from django.core.mail import send_mail
-from django.conf import settings
-import random
-
-def generate_otp():
-    """Generate 6-digit numeric OTP"""
-    return ''.join(random.choices('0123456789', k=6))
-
 
 class ResendOTPView(APIView):
     def post(self, request):
@@ -174,14 +161,6 @@ class ResendOTPView(APIView):
 
         return Response({"message": "OTP resent successfully."}, status=status.HTTP_200_OK)
 
-
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-from .models import UserProfile
-from .serializers import UserProfileSerializer
-
 class CompleteProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -216,34 +195,6 @@ class CompleteProfileView(APIView):
             serializer.save()
             return Response({"message": "Profile updated successfully."})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.models import User
-from django.db.models import Sum
-from datetime import date
-from admin_section.models import MonthlyTarget, Sale
-from .serializers import UserTargetStatusSerializer
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.models import User
-from django.db.models import Sum
-from datetime import date
-
-from admin_section.models import MonthlyTarget, Sale
-# from .serializers import UserTargetStatusSerializer  # you can keep using serializer if needed
 
 class UserTargetStatusAPI(APIView):
     authentication_classes = [JWTAuthentication]
@@ -324,13 +275,6 @@ class UserTargetStatusAPI(APIView):
             "monthly_status": monthly_status
         }, status=status.HTTP_200_OK)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, permissions
-from django.utils import timezone
-from .models import Attendance
-from .serializers import AttendanceSerializer
-
 # ----------------- CHECK-IN -----------------
 class AttendanceCheckInView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -359,7 +303,6 @@ class AttendanceCheckInView(APIView):
             {"message": "Successfully checked in.", "attendance": serializer.data},
             status=status.HTTP_200_OK
         )
-
 
 # ----------------- CHECK-OUT -----------------
 class AttendanceCheckOutView(APIView):
@@ -394,14 +337,6 @@ class AttendanceCheckOutView(APIView):
             {"message": "Successfully checked out.", "attendance": serializer.data},
             status=status.HTTP_200_OK
         )
-
-
-from datetime import date
-from calendar import monthrange
-from django.utils import timezone
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 
 class MonthlyAttendanceSummaryView(APIView):
     permission_classes = [IsAuthenticated]
@@ -451,13 +386,6 @@ class MonthlyAttendanceSummaryView(APIView):
             "total_absent_days": total_absent_days
         }, status=200)
 
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum
-
 class TargetSummaryView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -482,18 +410,6 @@ class TargetSummaryView(APIView):
             "total_sale": total_sale,
             "remaining_target": remaining_target
         }, status=200)
-
-
-
-
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from django.db.models import Q
-from datetime import timedelta
-from django.utils import timezone
-from .models import WorkPlan
-from .serializers import WorkPlanSerializer, WorkPlanCreateSerializer
-
 
 class UserWorkPlanListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -538,7 +454,6 @@ class UserWorkPlanListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save()
 
-
 class UserWorkPlanDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = WorkPlanSerializer
@@ -556,26 +471,6 @@ class UserWorkPlanDetailView(generics.RetrieveUpdateAPIView):
                 "message": "Work plan status updated successfully!"
             }, status=status.HTTP_200_OK)
         return Response({"detail": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import permissions
-from django.db.models import Q
-from datetime import timedelta
-from .models import WorkPlan
-from .serializers import WorkPlanSerializer
-from collections import defaultdict
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import permissions
-from django.db.models import Q
-from datetime import timedelta
-from collections import defaultdict
-from django.utils import timezone
-from .models import WorkPlan
-from .serializers import WorkPlanSerializer
-
 
 class UserWorkPlanAllView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -621,16 +516,6 @@ class UserWorkPlanAllView(APIView):
             "data": grouped_data
         })
 
-
-    
-
-from rest_framework import generics, permissions
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.utils import timezone
-from .models import HourlyReport
-from .serializers import HourlyReportSerializer, HourlyReportCreateSerializer
-
 class HourlyReportCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = HourlyReportCreateSerializer
@@ -642,46 +527,11 @@ class HourlyReportListView(generics.ListAPIView):
     def get_queryset(self):
         return HourlyReport.objects.filter(user=self.request.user).order_by('-report_date', '-report_hour')
 
-# Pending check API
-class PendingHourlyReportCheckView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        now = timezone.localtime()
-        current_hour = now.hour
-        today = now.date()
-
-        exists = HourlyReport.objects.filter(
-            user=user,
-            report_date=today,
-            report_hour=current_hour
-        ).exists()
-
-        if not exists:
-            return Response({"pending": True, "message": f"Your hourly report for {current_hour}:00 is pending!"})
-        return Response({"pending": False, "message": "All reports submitted for this hour."})
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import WorkType
-from .serializers import WorkTypeSerializer
-
 class WorkTypeListAPIView(APIView):
     def get(self, request):
         work_types = WorkType.objects.prefetch_related('options').all()
         serializer = WorkTypeSerializer(work_types, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import WorkPlanTitle
-from .serializers import WorkPlanTitleSerializer
 
 class WorkPlanTitleListAPIView(APIView):
     def get(self, request):
@@ -689,43 +539,11 @@ class WorkPlanTitleListAPIView(APIView):
         serializer = WorkPlanTitleSerializer(titles, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-# views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Project
-from .serializers import ProjectSerializer
-
 class ProjectListAPIView(APIView):
     def get(self, request):
         projects = Project.objects.all()
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.decorators import action
-
-from datetime import date, datetime
-import calendar
-from decimal import Decimal, ROUND_HALF_UP
-from django.utils import timezone
-from django.db.models import Sum
-
-from attendance.models import Attendance
-from admin_section.models import SalaryConfig, Sale, MonthlyTarget
-from rest_framework import viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.db.models import Sum
-from datetime import date, datetime
-from decimal import Decimal, ROUND_HALF_UP
-import calendar
-
 
 class UserSalarySlipViewSet(viewsets.ViewSet):
     """
@@ -890,3 +708,69 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
         }
 
         return Response(slip, status=200)
+
+
+
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from datetime import date
+from django.utils import timezone
+from django.contrib.auth.models import User
+from .models import HourlyReport
+
+
+class SimpleHourlyReportCheckAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        now = timezone.localtime()
+        today = date.today()
+        current_hour = now.hour
+
+        # Time limit: 11 AM – 7 PM
+        if not (11 <= current_hour <= 19):
+            return Response({
+                "message": "This API works only between 11 AM and 7 PM."
+            })
+
+        # If superuser → check all employee reports
+        if request.user.is_superuser:
+            missing = []
+
+            for user in User.objects.filter(is_superuser=False):
+                exists = HourlyReport.objects.filter(
+                    user=user,
+                    report_date=today,
+                    report_hour=current_hour
+                ).exists()
+
+                if not exists:
+                    missing.append(user.username)
+
+            if missing:
+                return Response({
+                    "message": "Some users have not submitted their hourly report.",
+                    "missing_users": missing
+                })
+
+            return Response({
+                "message": "All users have submitted their hourly report."
+            })
+
+        # If normal user → check own report
+        report_exists = HourlyReport.objects.filter(
+            user=request.user,
+            report_date=today,
+            report_hour=current_hour
+        ).exists()
+
+        if report_exists:
+            return Response({
+                "message": "You have already submitted your hourly report."
+            })
+
+        return Response({
+            "message": "You need to submit your hourly report."
+        })
