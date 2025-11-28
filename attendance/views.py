@@ -23,6 +23,7 @@ from rest_framework.decorators import action
 from .serializers import SignupSerializer, VerifyOTPSerializer, LoginSerializer, UserProfileSerializer, UserTargetStatusSerializer, WorkPlanSerializer, WorkPlanCreateSerializer,HourlyReportSerializer, HourlyReportCreateSerializer, AttendanceSerializer, ProjectSerializer, WorkTypeSerializer, WorkPlanTitleSerializer
 from .models import WorkPlan, HourlyReport, Attendance, Project, WorkType, WorkPlanTitle
 from admin_section.models import SalaryConfig, Sale, MonthlyTarget
+from django.utils.timezone import localtime
 
 def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
@@ -139,7 +140,7 @@ class ResendOTPView(APIView):
         # Rate limiting: allow resend only if last OTP was sent > 60 seconds ago
         last_sent_key = f"otp_last_sent_{email}"
         last_sent = cache.get(last_sent_key)
-        if last_sent and (timezone.now() - last_sent).total_seconds() < 60:
+        if last_sent and (localtime(timezone.now()) - last_sent).total_seconds() < 60:
             return Response(
                 {"error": "OTP already sent recently. Please wait before requesting again."},
                 status=status.HTTP_429_TOO_MANY_REQUESTS
@@ -149,7 +150,7 @@ class ResendOTPView(APIView):
         otp = generate_otp()
         cached_data['otp'] = otp
         cache.set(cache_key, cached_data, timeout=600)  # OTP valid for 10 minutes
-        cache.set(last_sent_key, timezone.now(), timeout=60)  # Rate limit
+        cache.set(last_sent_key, localtime(timezone.now()), timeout=60)  # Rate limit
 
         # Send OTP via email
         send_mail(
@@ -159,7 +160,10 @@ class ResendOTPView(APIView):
             recipient_list=[email],
         )
 
-        return Response({"message": "OTP resent successfully."}, status=status.HTTP_200_OK)
+        return Response({
+            "message": "OTP resent successfully.",
+            "otp_last_sent": localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
+            }, status=status.HTTP_200_OK)
 
 class CompleteProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -293,7 +297,7 @@ class AttendanceCheckInView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        attendance.check_in_time = timezone.now()
+        attendance.check_in_time = localtime(timezone.now())
         attendance.check_in_latitude = latitude
         attendance.check_in_longitude = longitude
         attendance.save()
@@ -327,7 +331,7 @@ class AttendanceCheckOutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        attendance.check_out_time = timezone.now()
+        attendance.check_out_time = localtime(timezone.now())
         attendance.check_out_latitude = latitude
         attendance.check_out_longitude = longitude
         attendance.save()
@@ -726,7 +730,7 @@ class SimpleHourlyReportCheckAPI(APIView):
     def get(self, request):
 
         now = timezone.localtime()
-        today = date.today()
+        today = date.localdate()
         current_hour = now.hour
 
         # Time limit: 11 AM – 7 PM

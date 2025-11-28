@@ -15,6 +15,7 @@ from datetime import date
 import calendar
 from geopy.geocoders import Nominatim
 from decimal import Decimal, ROUND_HALF_UP
+from django.utils import timezone
 from .serializers import (
     WorkTypeSerializer_admin, WorkTypeOptionSerializer_admin,
     HourlyReportSerializer_admin, WorkDetailSerializer_admin,WorkPlanSerializer_admin,SalaryConfigSerializer, WorkPlanTitleSerializer_admin, MonthlyTargetSerializer, SaleSerializer, UserSerializer, UserProfileSerializer
@@ -334,10 +335,10 @@ class AttendanceDashboardViewSet(viewsets.ViewSet):
 
                 "status": status_label,
 
-                "check_in": att.check_in_time.strftime("%H:%M:%S") if att and att.check_in_time else "-",
+                "check_in": timezone.localtime(att.check_in_time).strftime("%H:%M:%S") if att and att.check_in_time else "-",
                 "check_in_location": get_location(att.check_in_latitude, att.check_in_longitude) if att else "-",
 
-                "check_out": att.check_out_time.strftime("%H:%M:%S") if att and att.check_out_time else "-",
+                "check_out": timezone.localtime(att.check_out_time).strftime("%H:%M:%S") if att and att.check_out_time else "-",
                 "check_out_location": get_location(att.check_out_latitude, att.check_out_longitude) if att else "-"
             })
 
@@ -674,7 +675,7 @@ class DashboardViewSet(ViewSet):
             recent_activity.append({
                 "title": "User Signed Up",
                 "description": f"{get_user_name(u)} signed up",
-                "time": u.date_joined.strftime('%H:%M'),
+                "time": timezone.localtime(u.date_joined).strftime('%H:%M'),
                 "user_id": u.id,
                 "icon": "fa-user-plus",
                 "color": "var(--info)"
@@ -684,7 +685,7 @@ class DashboardViewSet(ViewSet):
             recent_activity.append({
                 "title": "User Logged In",
                 "description": f"{get_user_name(u)} logged in",
-                "time": u.last_login.strftime('%H:%M'),
+                "time": timezone.localtime(u.last_login).strftime('%H:%M'),
                 "user_id": u.id,
                 "icon": "fa-sign-in-alt",
                 "color": "var(--success)"
@@ -693,8 +694,8 @@ class DashboardViewSet(ViewSet):
         for att in checked_in_att:
             recent_activity.append({
                 "title": "Checked In",
-                "description": f"{get_user_name(att.user)} checked in at {att.check_in_time.strftime('%I:%M %p')}",
-                "time": att.check_in_time.strftime('%H:%M'),
+                "description": f"{get_user_name(att.user)} checked in at {timezone.localtime(att.check_in_time).strftime('%I:%M %p')}",
+                "time": timezone.localtime(att.check_in_time).strftime('%H:%M'),
                 "user_id": att.user.id,
                 "icon": "fa-sign-in-alt",
                 "color": "var(--success)"
@@ -703,8 +704,8 @@ class DashboardViewSet(ViewSet):
         for att in checked_out_att:
             recent_activity.append({
                 "title": "Checked Out / Logged Out",
-                "description": f"{get_user_name(att.user)} checked out at {att.check_out_time.strftime('%I:%M %p')}",
-                "time": att.check_out_time.strftime('%H:%M'),
+                "description": f"{get_user_name(att.user)} checked out at {timezone.localtime(att.check_out_time).strftime('%I:%M %p')}",
+                "time": timezone.localtime(att.check_out_time).strftime('%H:%M'),
                 "user_id": att.user.id,
                 "icon": "fa-sign-out-alt",
                 "color": "var(--warning)"
@@ -714,7 +715,7 @@ class DashboardViewSet(ViewSet):
             recent_activity.append({
                 "title": "Profile Created",
                 "description": f"{get_user_name(p.user)} created profile",
-                "time": p.created_at.strftime('%H:%M'),
+                "time": timezone.localtime(p.created_at).strftime('%H:%M'),
                 "user_id": p.user.id,
                 "icon": "fa-id-card",
                 "color": "var(--info)"
@@ -724,7 +725,7 @@ class DashboardViewSet(ViewSet):
             recent_activity.append({
                 "title": "Profile Updated",
                 "description": f"{get_user_name(p.user)} updated profile",
-                "time": p.updated_at.strftime('%H:%M'),
+                "time": timezone.localtime(p.updated_at).strftime('%H:%M'),
                 "user_id": p.user.id,
                 "icon": "fa-edit",
                 "color": "var(--warning)"
@@ -734,7 +735,7 @@ class DashboardViewSet(ViewSet):
             recent_activity.append({
                 "title": "Project Created",
                 "description": f"{proj.name} project created",
-                "time": proj.created_at.strftime('%H:%M'),
+                "time": timezone.localtime(proj.created_at).strftime('%H:%M'),
                 "user_id": proj.created_by.id if proj.created_by else None,
                 "icon": "fa-building",
                 "color": "var(--dark)"
@@ -764,7 +765,7 @@ class DashboardViewSet(ViewSet):
             recent_activity.append({
                 "title": "Work Plan Created",
                 "description": f"{get_user_name(wp.created_by)} created a work plan",
-                "time": wp.created_at.strftime('%H:%M'),
+                "time": timezone.localtime(wp.created_at).strftime('%H:%M'),
                 "user_id": wp.created_by.id,
                 "icon": "fa-tasks",
                 "color": "var(--primary)"
@@ -774,7 +775,7 @@ class DashboardViewSet(ViewSet):
             recent_activity.append({
                 "title": "Hourly Report",
                 "description": f"{get_user_name(hr.user)} submitted hourly report ({hr.report_hour}:00)",
-                "time": hr.created_at.strftime('%H:%M'),
+                "time": timezone.localtime(hr.created_at).strftime('%H:%M'),
                 "user_id": hr.user.id,
                 "icon": "fa-clock",
                 "color": "var(--info)"
