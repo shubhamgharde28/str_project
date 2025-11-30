@@ -303,10 +303,11 @@ class AttendanceCheckInView(APIView):
         attendance.save()
 
         serializer = AttendanceSerializer(attendance)
-        return Response(
-            {"message": "Successfully checked in.", "attendance": serializer.data},
-            status=status.HTTP_200_OK
-        )
+        return Response({
+            "message": "Successfully checked in.",
+            "check_in_time": attendance.check_in_time.strftime("%I:%M %p"),
+            "attendance": AttendanceSerializer(attendance).data
+        }, status=status.HTTP_200_OK)
 
 # ----------------- CHECK-OUT -----------------
 class AttendanceCheckOutView(APIView):
@@ -337,10 +338,11 @@ class AttendanceCheckOutView(APIView):
         attendance.save()
 
         serializer = AttendanceSerializer(attendance)
-        return Response(
-            {"message": "Successfully checked out.", "attendance": serializer.data},
-            status=status.HTTP_200_OK
-        )
+        return Response({
+            "message": "Successfully checked out.",
+            "check_out_time": attendance.check_out_time.strftime("%I:%M %p"),
+            "attendance": AttendanceSerializer(attendance).data
+        }, status=status.HTTP_200_OK)
 
 class MonthlyAttendanceSummaryView(APIView):
     permission_classes = [IsAuthenticated]
@@ -730,7 +732,7 @@ class SimpleHourlyReportCheckAPI(APIView):
     def get(self, request):
 
         now = timezone.localtime()
-        today = date.localdate()
+        today = timezone.localdate()
         current_hour = now.hour
 
         # Time limit: 11 AM – 7 PM
