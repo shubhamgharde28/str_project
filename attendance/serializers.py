@@ -109,6 +109,21 @@ class WorkPlanTitleSerializer(serializers.ModelSerializer):
         model = WorkPlanTitle
         fields = ['id', 'title', 'description']
 
+
+class UserDropdownSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='profile.first_name')
+    last_name = serializers.CharField(source='profile.last_name')
+
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name']
+
+
+class WorkPlanTitleDropdownSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkPlanTitle
+        fields = ['id', 'title']
+
 class WorkPlanSerializer(serializers.ModelSerializer):
     titles = WorkPlanTitleSerializer(many=True, read_only=True)
     created_by = serializers.StringRelatedField(read_only=True)  

@@ -20,7 +20,7 @@ from datetime import date, timedelta
 import calendar
 from decimal import Decimal, ROUND_HALF_UP
 from rest_framework.decorators import action
-from .serializers import SignupSerializer, VerifyOTPSerializer, LoginSerializer, UserProfileSerializer, UserTargetStatusSerializer, WorkPlanSerializer, WorkPlanCreateSerializer,HourlyReportSerializer, HourlyReportCreateSerializer, AttendanceSerializer, ProjectSerializer, WorkTypeSerializer, WorkPlanTitleSerializer
+from .serializers import SignupSerializer, VerifyOTPSerializer, LoginSerializer, UserProfileSerializer, UserTargetStatusSerializer, WorkPlanSerializer, WorkPlanCreateSerializer,HourlyReportSerializer, HourlyReportCreateSerializer, AttendanceSerializer, ProjectSerializer, WorkTypeSerializer, WorkPlanTitleSerializer, UserDropdownSerializer, WorkPlanTitleDropdownSerializer
 from .models import WorkPlan, HourlyReport, Attendance, Project, WorkType, WorkPlanTitle
 from admin_section.models import SalaryConfig, Sale, MonthlyTarget
 from django.utils.timezone import localtime
@@ -521,6 +521,23 @@ class UserWorkPlanAllView(APIView):
             "total_count": queryset.count(),
             "data": grouped_data
         })
+
+
+class WorkPlanDropdownsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        coworkers = User.objects.all()  # You can filter by department if needed
+        titles = WorkPlanTitle.objects.all()
+        
+        coworker_data = UserDropdownSerializer(coworkers, many=True).data
+        title_data = WorkPlanTitleDropdownSerializer(titles, many=True).data
+        
+        return Response({
+            "coworkers": coworker_data,
+            "titles": title_data
+        })
+
 
 class HourlyReportCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]

@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI
 
 router = DefaultRouter()
 router.register(r"user-salary-slip", UserSalarySlipViewSet, basename="user-salary-slip")
@@ -28,7 +28,7 @@ urlpatterns = [
     path('workplans/user/', UserWorkPlanListCreateView.as_view(), name='user-workplans'),
     path('workplans/user/<int:pk>/', UserWorkPlanDetailView.as_view(), name='user-workplan-detail'),
     path('workplans/user/all/', UserWorkPlanAllView.as_view(), name='user-workplans-all'),
-
+    path('workplan/dropdowns/', WorkPlanDropdownsAPIView.as_view(), name='workplan-dropdowns'),
     path('work-types/', WorkTypeListAPIView.as_view(), name='work-type-list'),
     path('workplan-titles/', WorkPlanTitleListAPIView.as_view(), name='workplan-title-list'),
     path('projects/', ProjectListAPIView.as_view(), name='projects-list'),
