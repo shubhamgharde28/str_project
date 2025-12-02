@@ -585,8 +585,17 @@ class UserWorkPlanViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """Return only the logged-in user's workplans."""
-        return WorkPlan.objects.filter(created_by=self.request.user, type='user_created').order_by('-date')
+        user = self.request.user
+
+        # Superuser should see all user-created workplans
+        if user.is_superuser:
+            return WorkPlan.objects.filter(type='user_created').order_by('-date')
+
+        # Normal users see only their own
+        return WorkPlan.objects.filter(
+            created_by=user,
+            type='user_created'
+        ).order_by('-date')
 
     def perform_create(self, serializer):
         """Automatically assign created_by and type."""
