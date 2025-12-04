@@ -208,76 +208,73 @@ class UserTargetStatusAPI(APIView):
         user = get_object_or_404(User, id=user_id)
 
         if request.user != user and not request.user.is_staff:
-            return Response({"error": "You are not allowed to view this user's target."},
-                            status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
 
         year_param = request.query_params.get('year', None)
-        try:
-            year = int(year_param) if year_param else date.today().year
-        except ValueError:
-            return Response({"error": "Invalid year parameter."}, status=status.HTTP_400_BAD_REQUEST)
+        year = int(year_param) if year_param else date.today().year
 
-        # --- STEP 1: Read previous year's December carry (only once) ---
+        # Previous December carry
         previous_year = year - 1
         december_carry = 0
 
         try:
             prev_dec = MonthlyTarget.objects.get(user=user, year=previous_year, month=12)
-            dec_sales = Sale.objects.filter(user=user, year=previous_year, month=12).aggregate(
-                total_sold=Sum('area_sold')
-            )['total_sold'] or 0
+            dec_sold = Sale.objects.filter(
+                user=user, year=previous_year, month=12
+            ).aggregate(total=Sum('area_sold'))["total"] or 0
 
-            if dec_sales >= prev_dec.target_area:
-                december_carry = dec_sales - prev_dec.target_area
-            else:
-                december_carry = 0
+            december_carry = max(0, dec_sold - prev_dec.target_area)
 
         except MonthlyTarget.DoesNotExist:
             december_carry = 0
 
-        # --- STEP 2: Process current year month-by-month ---
-        targets = list(MonthlyTarget.objects.filter(user=user, year=year).order_by('month'))
+        # Current year
+        targets = MonthlyTarget.objects.filter(user=user, year=year).order_by("month")
 
         monthly_status = []
         running_carry = 0
         first_month = True
 
-        for target in targets:
-            sales_agg = Sale.objects.filter(user=user, year=year, month=target.month).aggregate(
-                total_sold=Sum('area_sold')
-            )
-            total_sold = sales_agg["total_sold"] or 0
+        for t in targets:
+            sold = Sale.objects.filter(
+                user=user, year=year, month=t.month
+            ).aggregate(total=Sum('area_sold'))["total"] or 0
 
-            # Apply previous December carry only for January
+            # Carry logic
             if first_month:
-                effective_sold = total_sold + december_carry
+                carry_from_last_month = december_carry
+                effective = sold + december_carry
                 first_month = False
             else:
-                effective_sold = total_sold + running_carry
+                carry_from_last_month = running_carry
+                effective = sold + running_carry
 
-            if effective_sold >= target.target_area:
+            if effective >= t.target_area:
                 status_str = "green"
-                new_carry = effective_sold - target.target_area
+                new_carry = effective - t.target_area
             else:
                 status_str = "red"
                 new_carry = 0
 
             monthly_status.append({
-                "month": target.get_month_display(),
-                "target_area": float(target.target_area),
-                "sold_area": float(total_sold),
+                "month": t.get_month_display(),
+                "target_area": float(t.target_area),
+                "sold_area": float(sold),
                 "status": status_str,
+                "carry_from_last_month": float(carry_from_last_month),
                 "carry_forward": float(new_carry),
             })
 
             running_carry = new_carry
 
+        # ⛔ NO SERIALIZER — DIRECT JSON RETURN
         return Response({
             "user_id": user.id,
-            "user_email": user.email,
+            "username": user.username,
+            "email": user.email,
             "year": year,
             "monthly_status": monthly_status
-        }, status=status.HTTP_200_OK)
+        })
 
 # ----------------- CHECK-IN -----------------
 class AttendanceCheckInView(APIView):
@@ -549,6 +546,16 @@ class HourlyReportListView(generics.ListAPIView):
 
     def get_queryset(self):
         return HourlyReport.objects.filter(user=self.request.user).order_by('-report_date', '-report_hour')
+
+class HourlyReportUpdateView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = HourlyReportCreateSerializer  # You can use same serializer for update
+    queryset = HourlyReport.objects.all()
+
+    def get_queryset(self):
+        # User can update only his own reports
+        return HourlyReport.objects.filter(user=self.request.user)
+
 
 class WorkTypeListAPIView(APIView):
     def get(self, request):

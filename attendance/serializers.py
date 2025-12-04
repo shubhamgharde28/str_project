@@ -222,7 +222,10 @@ class HourlyReportCreateSerializer(serializers.ModelSerializer):
         work_type = validated_data.pop('work_types')
         work_type_option = validated_data.pop('work_type_options')
 
-        report = HourlyReport.objects.create(user=self.context['request'].user, **validated_data)
+        report = HourlyReport.objects.create(
+            user=self.context['request'].user,
+            **validated_data
+        )
 
         report.work_types.set([work_type])
         report.work_type_options.set([work_type_option])
@@ -231,6 +234,33 @@ class HourlyReportCreateSerializer(serializers.ModelSerializer):
             WorkDetail.objects.create(hourly_report=report, **detail_data)
 
         return report
+
+    def update(self, instance, validated_data):
+        # Extract nested fields
+        details_data = validated_data.pop("details", None)
+        work_type = validated_data.pop("work_types", None)
+        work_type_option = validated_data.pop("work_type_options", None)
+
+        # Update main fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update single work type
+        if work_type:
+            instance.work_types.set([work_type])
+
+        # Update single work type option
+        if work_type_option:
+            instance.work_type_options.set([work_type_option])
+
+        # Update details
+        if details_data is not None:
+            instance.details.all().delete()
+            for detail in details_data:
+                WorkDetail.objects.create(hourly_report=instance, **detail)
+
+        return instance
 
     def to_representation(self, instance):
         from .serializers import HourlyReportSerializer
