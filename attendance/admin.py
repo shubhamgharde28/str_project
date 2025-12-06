@@ -145,19 +145,15 @@ class WorkPlanAdmin(admin.ModelAdmin):
 
 
 from django.contrib import admin
-from .models import WorkType, WorkTypeOption, HourlyReport, WorkDetail
+from .models import WorkType, HourlyReport, WorkDetail
 
-# Inline for WorkTypeOption under WorkType
-class WorkTypeOptionInline(admin.TabularInline):
-    model = WorkTypeOption
-    extra = 1  # Number of empty fields
-    show_change_link = True
+
 
 @admin.register(WorkType)
 class WorkTypeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description']
+    list_display = ['name', 'created_at', 'updated_at']
     search_fields = ['name']
-    inlines = [WorkTypeOptionInline]
+
 
 # Inline for WorkDetail under HourlyReport
 class WorkDetailInline(admin.TabularInline):
@@ -171,17 +167,20 @@ class HourlyReportAdmin(admin.ModelAdmin):
     list_filter = ['report_date', 'report_hour', 'work_done']
     search_fields = ['user__username', 'user__email']
     inlines = [WorkDetailInline]
-    filter_horizontal = ['work_types', 'work_type_options']  # For ManyToMany fields
+    filter_horizontal = ['work_types']  # For ManyToMany fields
 
-@admin.register(WorkTypeOption)
-class WorkTypeOptionAdmin(admin.ModelAdmin):
-    list_display = ['name', 'work_type', 'description']
-    list_filter = ['work_type']
-    search_fields = ['name', 'work_type__name']
+
 
 @admin.register(WorkDetail)
 class WorkDetailAdmin(admin.ModelAdmin):
-    list_display = ('hourly_report', 'project', 'work_type_option', 'customer_name', 'customer_response', 'next_followup_date')
+    list_display = (
+        'hourly_report',
+        'project',
+        'work_type',        # updated (previously work_type_option)
+        'customer_name',
+        'customer_response',
+        'next_followup_date'
+    )
     list_filter = ('project', 'customer_response',)
     search_fields = ('customer_name', 'mobile_number', 'project__name')
 

@@ -20,8 +20,8 @@ from datetime import date, timedelta
 import calendar
 from decimal import Decimal, ROUND_HALF_UP
 from rest_framework.decorators import action
-from .serializers import SignupSerializer, VerifyOTPSerializer, LoginSerializer, UserProfileSerializer, UserTargetStatusSerializer, WorkPlanSerializer, WorkPlanCreateSerializer,HourlyReportSerializer, HourlyReportCreateSerializer, AttendanceSerializer, ProjectSerializer, WorkTypeSerializer, WorkPlanTitleSerializer, UserDropdownSerializer, WorkPlanTitleDropdownSerializer
-from .models import WorkPlan, HourlyReport, Attendance, Project, WorkType, WorkPlanTitle
+from .serializers import SignupSerializer, VerifyOTPSerializer, LoginSerializer, UserProfileSerializer, UserTargetStatusSerializer, WorkPlanSerializer, WorkPlanCreateSerializer,HourlyReportSerializer, HourlyReportCreateSerializer, AttendanceSerializer, ProjectSerializer, WorkTypeSerializer, WorkPlanTitleSerializer, UserDropdownSerializer, WorkPlanTitleDropdownSerializer, DailySummarySerializer
+from .models import WorkPlan, HourlyReport, Attendance, Project, WorkType, WorkPlanTitle, DailySummaryReport
 from admin_section.models import SalaryConfig, Sale, MonthlyTarget
 from django.utils.timezone import localtime
 
@@ -540,6 +540,30 @@ class HourlyReportCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = HourlyReportCreateSerializer
 
+class DailySummaryCreateView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DailySummarySerializer
+
+    def get_queryset(self):
+        return DailySummaryReport.objects.filter(user=self.request.user)
+
+
+class DailySummaryListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DailySummarySerializer
+
+    def get_queryset(self):
+        return DailySummaryReport.objects.filter(user=self.request.user).order_by('-report_date')
+
+
+class DailySummaryUpdateView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DailySummarySerializer
+
+    def get_queryset(self):
+        return DailySummaryReport.objects.filter(user=self.request.user)
+
+
 class HourlyReportListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = HourlyReportSerializer
@@ -558,10 +582,13 @@ class HourlyReportUpdateView(generics.UpdateAPIView):
 
 
 class WorkTypeListAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
-        work_types = WorkType.objects.prefetch_related('options').all()
+        work_types = WorkType.objects.all()
         serializer = WorkTypeSerializer(work_types, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class WorkPlanTitleListAPIView(APIView):
     def get(self, request):

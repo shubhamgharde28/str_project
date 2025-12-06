@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView, DailySummaryCreateView, DailySummaryListView, DailySummaryUpdateView
 
 router = DefaultRouter()
 router.register(r"user-salary-slip", UserSalarySlipViewSet, basename="user-salary-slip")
@@ -29,14 +29,17 @@ urlpatterns = [
     path('workplans/user/<int:pk>/', UserWorkPlanDetailView.as_view(), name='user-workplan-detail'),
     path('workplans/user/all/', UserWorkPlanAllView.as_view(), name='user-workplans-all'),
     path('workplan/dropdowns/', WorkPlanDropdownsAPIView.as_view(), name='workplan-dropdowns'),
-    path('work-types/', WorkTypeListAPIView.as_view(), name='work-type-list'),
     path('workplan-titles/', WorkPlanTitleListAPIView.as_view(), name='workplan-title-list'),
     path('projects/', ProjectListAPIView.as_view(), name='projects-list'),
 
+    path('work-types/', WorkTypeListAPIView.as_view(), name='work-type-list'),
     path('hourly-reports/', HourlyReportListView.as_view(), name='hourly-report-list'),
     path('hourly-reports/create/', HourlyReportCreateView.as_view(), name='hourly-report-create'),
     path('hourly-reports/update/<int:pk>/', HourlyReportUpdateView.as_view(), name='hourly-report-update'),
 
+    path("summary/create/", DailySummaryCreateView.as_view()),
+    path("summary/list/", DailySummaryListView.as_view()),
+    path("summary/update/<int:pk>/", DailySummaryUpdateView.as_view()),
 
     path("simple-hourly-check/", SimpleHourlyReportCheckAPI.as_view()),
    ]

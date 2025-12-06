@@ -2,6 +2,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class EmailOTP(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_otps')
     otp = models.CharField(max_length=6)
@@ -100,6 +101,8 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.user.email} - {self.date}"
 
+
+# workplan models 
 class WorkPlanTitle(models.Model):
     title = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
@@ -131,64 +134,100 @@ class WorkPlan(models.Model):
     def __str__(self):
         return f"{self.created_by.username} ({self.date})"
 
+
+
+
 CUSTOMER_RESPONSE_CHOICES = [
     ('interested', 'Interested'),
     ('not_interested', 'Not Interested'),
     ('not_sure', 'Not Sure')
 ]
 
-# Yes/No choice
 YES_NO_CHOICES = [
     ('yes', 'Yes'),
     ('no', 'No')
 ]
 
+# -------------------------
+# WorkType (only main type)
+# -------------------------
 class WorkType(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True, null=True)
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
         return self.name
 
-class WorkTypeOption(models.Model):
-    work_type = models.ForeignKey(WorkType, on_delete=models.CASCADE, related_name='options')
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
 
-    def __str__(self):
-        return f"{self.work_type.name} - {self.name}"
-
+# -------------------------
+# HourlyReport (no type options)
+# -------------------------
 class HourlyReport(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hourly_reports')
-    report_date = models.DateField()  # Date of the report
-    report_hour = models.IntegerField()  # Hour 0-23
+    report_date = models.DateField()
+    report_hour = models.IntegerField()
     location_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     location_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     work_done = models.CharField(max_length=3, choices=YES_NO_CHOICES)
     reason_not_done = models.TextField(blank=True, null=True)
+
+    # Only work type (many selected allowed)
     work_types = models.ManyToManyField(WorkType, blank=True, related_name='hourly_reports')
-    work_type_options = models.ManyToManyField(WorkTypeOption, blank=True, related_name='hourly_reports')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.report_date} - Hour {self.report_hour}"
 
+
+
+from .choices.not_interested import NOT_INTERESTED_REASON_CHOICES
+
 class WorkDetail(models.Model):
     hourly_report = models.ForeignKey(HourlyReport, on_delete=models.CASCADE, related_name='details')
-    work_type_option = models.ForeignKey(WorkTypeOption, on_delete=models.CASCADE)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='work_details', null=True, blank=True)  # ✅ NEW FIELD
+    work_type = models.ForeignKey(WorkType, on_delete=models.CASCADE)  
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='work_details', null=True, blank=True)
+
     customer_name = models.CharField(max_length=100, blank=True, null=True)
     mobile_number = models.CharField(max_length=15, blank=True, null=True)
     plot_number = models.CharField(max_length=50, blank=True, null=True)
-    customer_response = models.CharField(max_length=15, choices=CUSTOMER_RESPONSE_CHOICES)
-    reason_not_interested = models.TextField(blank=True, null=True)
+
+    customer_response = models.CharField(max_length=15, choices=CUSTOMER_RESPONSE_CHOICES, blank=True, null=True)
+    reason_not_interested = models.CharField(max_length=50, choices=NOT_INTERESTED_REASON_CHOICES, blank=True, null=True)
+    other_reason = models.TextField(blank=True, null=True)
+
+
     site_visit_done = models.BooleanField(default=False)
     meeting_done = models.BooleanField(default=False)
     booking_done = models.BooleanField(default=False)
+
     next_followup_date = models.DateField(blank=True, null=True)
 
+    area = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_value = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    tcm = models.CharField(max_length=50, null=True, blank=True)  
+    value_per_sqft = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    feedback = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
-        project_name = self.project.name if self.project else "No Project"
-        return f"{self.hourly_report} - {project_name} - {self.work_type_option.name}"
-    
+        return f"{self.hourly_report} - {self.work_type.name}"
+
+class DailySummaryReport(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_summaries')
+    report_date = models.DateField()
+
+    summary_text = models.TextField()  # Whole day work summary
+    total_hours = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'report_date')  # 1 summary per day
+
+    def __str__(self):
+        return f"{self.user.username} - Summary - {self.report_date}"

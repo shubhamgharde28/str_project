@@ -9,7 +9,7 @@ from django.db.models import Sum
 from django.contrib.auth.models import User
 from .permissions import IsSuperUser
 from rest_framework.decorators import action
-from attendance.models import WorkType, WorkTypeOption, HourlyReport, WorkDetail, Attendance, UserProfile, WorkPlanTitle, WorkPlan, Project
+from attendance.models import WorkType, HourlyReport, WorkDetail, Attendance, UserProfile, WorkPlanTitle, WorkPlan, Project, DailySummaryReport
 from rest_framework.permissions import IsAuthenticated
 from datetime import date
 import calendar
@@ -17,9 +17,20 @@ from geopy.geocoders import Nominatim
 from decimal import Decimal, ROUND_HALF_UP
 from django.utils import timezone
 from .serializers import (
-    WorkTypeSerializer_admin, WorkTypeOptionSerializer_admin,
-    HourlyReportSerializer_admin, WorkDetailSerializer_admin,WorkPlanSerializer_admin,SalaryConfigSerializer, WorkPlanTitleSerializer_admin, MonthlyTargetSerializer, SaleSerializer, UserSerializer, UserProfileSerializer
+    WorkTypeSerializer_admin,
+    HourlyReportSerializer_admin, WorkDetailSerializer_admin,WorkPlanSerializer_admin,SalaryConfigSerializer, WorkPlanTitleSerializer_admin, MonthlyTargetSerializer, SaleSerializer, UserSerializer, UserProfileSerializer, ProjectSerializer_admin, DailySummarySerializer_admin
 )
+
+from .permissions import IsSuperUser
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer_admin
+    permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
 
 class MonthlyTargetViewSet(viewsets.ModelViewSet):
     queryset = MonthlyTarget.objects.all()
@@ -625,11 +636,6 @@ class WorkTypeViewSet(viewsets.ModelViewSet):
     serializer_class = WorkTypeSerializer_admin
     permission_classes = [permissions.IsAuthenticated]
 
-class WorkTypeOptionViewSet(viewsets.ModelViewSet):
-    queryset = WorkTypeOption.objects.all()
-    serializer_class = WorkTypeOptionSerializer_admin
-    permission_classes = [permissions.IsAuthenticated]
-
 class HourlyReportViewSet(viewsets.ModelViewSet):
     serializer_class = HourlyReportSerializer_admin
     permission_classes = [permissions.IsAuthenticated]
@@ -640,12 +646,57 @@ class HourlyReportViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+
 class WorkDetailViewSet(viewsets.ModelViewSet):
     serializer_class = WorkDetailSerializer_admin
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return WorkDetail.objects.select_related('hourly_report', 'work_type_option', 'project')
+        return WorkDetail.objects.select_related(
+            'hourly_report',
+            'work_type',
+            'project'
+        )
+
+
+def calculate_total_hours(user, report_date):
+    """
+    Currently counts number of hourly reports for that date.
+    Change logic if you want sum over an 'hours' field.
+    """
+    return HourlyReport.objects.filter(user=user, report_date=report_date).count()
+
+
+class DailySummaryViewSet_admin(viewsets.ModelViewSet):
+    serializer_class = DailySummarySerializer_admin
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self):
+        qs = DailySummaryReport.objects.select_related('user').all().order_by('-report_date')
+        user_id = self.request.query_params.get('user_id')
+        date = self.request.query_params.get('date')
+
+        if user_id:
+            qs = qs.filter(user__id=user_id)
+        if date:
+            qs = qs.filter(report_date=date)
+
+        return qs
+
+    def perform_create(self, serializer):
+        """
+        Optionally auto-calculate total_hours based on existing hourly reports.
+        Admin can still override total_hours by including it in payload.
+        """
+        user = serializer.validated_data.get('user', None)
+        report_date = serializer.validated_data.get('report_date', None)
+
+        # If admin didn't pass total_hours explicitly, calculate it
+        if serializer.validated_data.get('total_hours') in (None, '') and user and report_date:
+            total_hours = calculate_total_hours(user, report_date)
+            serializer.save(total_hours=total_hours)
+        else:
+            serializer.save()
 
 class DashboardViewSet(ViewSet):
     permission_classes = [IsAuthenticated, IsSuperUser]
@@ -809,7 +860,6 @@ class DashboardViewSet(ViewSet):
         # ----------------------
 
         worktype_count = WorkType.objects.count()
-        worktype_option_count = WorkTypeOption.objects.count()
 
         # ----------------------
         # HOURLY REPORT DATA
@@ -853,7 +903,6 @@ class DashboardViewSet(ViewSet):
             "user_workplans_count": user_workplans_count,
 
             "worktype_count": worktype_count,
-            "worktype_option_count": worktype_option_count,
 
             "hourly_report_total": hourly_total,
             "hourly_report_today": hourly_today,

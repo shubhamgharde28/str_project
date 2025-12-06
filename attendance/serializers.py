@@ -1,7 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import HourlyReport, WorkDetail, WorkType, WorkTypeOption, Attendance, WorkPlanTitle, UserProfile, WorkPlan, Project
+from .models import HourlyReport, WorkDetail, WorkType, Attendance, WorkPlanTitle, UserProfile, WorkPlan, Project
 
 class SignupSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -169,39 +169,50 @@ class WorkPlanCreateSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return WorkPlanSerializer(instance, context=self.context).data
 
-class WorkTypeOptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorkTypeOption
-        fields = ['id', 'name', 'description']
 
+
+# Hourly Report serializers 
+# -------------------------
+# WorkType Serializer
+# -------------------------
 class WorkTypeSerializer(serializers.ModelSerializer):
-    options = WorkTypeOptionSerializer(many=True, read_only=True)
-
     class Meta:
         model = WorkType
-        fields = ['id', 'name', 'description', 'options']
+        fields = ['id', 'name', 'created_at', 'updated_at']
 
+
+# -------------------------
+# WorkDetail Serializer
+# -------------------------
 class WorkDetailSerializer(serializers.ModelSerializer):
-    work_type_option = serializers.PrimaryKeyRelatedField(queryset=WorkTypeOption.objects.all())
+    work_type = serializers.PrimaryKeyRelatedField(queryset=WorkType.objects.all())
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all(), allow_null=True, required=False)
 
     class Meta:
         model = WorkDetail
-        exclude = ['hourly_report']
+        exclude = ['hourly_report']  # will be set in HourlyReportCreateSerializer
 
+
+# -------------------------
+# HourlyReport Serializer (Read)
+# -------------------------
 class HourlyReportSerializer(serializers.ModelSerializer):
     work_types = WorkTypeSerializer(many=True, read_only=True)
-    work_type_options = WorkTypeOptionSerializer(many=True, read_only=True)
     details = WorkDetailSerializer(many=True, read_only=True)
 
     class Meta:
         model = HourlyReport
         fields = '__all__'
 
+
+# -------------------------
+# HourlyReport Serializer (Create / Update)
+# -------------------------
+from .models import DailySummaryReport
+
 class HourlyReportCreateSerializer(serializers.ModelSerializer):
-    work_types = serializers.PrimaryKeyRelatedField(queryset=WorkType.objects.all())
-    work_type_options = serializers.PrimaryKeyRelatedField(queryset=WorkTypeOption.objects.all())
-    details = WorkDetailSerializer(many=True)
+    work_types = serializers.PrimaryKeyRelatedField(queryset=WorkType.objects.all(), many=True)
+    details = WorkDetailSerializer(many=True, required=False)  # details optional
 
     class Meta:
         model = HourlyReport
@@ -213,58 +224,100 @@ class HourlyReportCreateSerializer(serializers.ModelSerializer):
             'work_done',
             'reason_not_done',
             'work_types',
-            'work_type_options',
             'details',
         ]
 
+    # ---------------------------
+    # 🔥 VALIDATE BEFORE CREATE
+    # ---------------------------
+    def validate(self, data):
+        user = self.context['request'].user
+        report_date = data.get("report_date")
+
+        # ❌ BLOCK HOURLY REPORT IF SUMMARY EXISTS
+        if DailySummaryReport.objects.filter(user=user, report_date=report_date).exists():
+            raise serializers.ValidationError(
+                "A Daily Summary Report already exists for this date. "
+                "You cannot add hourly reports."
+            )
+
+        return data
+
+    # ---------------------------
+    # CREATE
+    # ---------------------------
     def create(self, validated_data):
-        details_data = validated_data.pop('details')
-        work_type = validated_data.pop('work_types')
-        work_type_option = validated_data.pop('work_type_options')
+        details_data = validated_data.pop('details', [])
+        work_types = validated_data.pop('work_types', [])
 
         report = HourlyReport.objects.create(
             user=self.context['request'].user,
             **validated_data
         )
 
-        report.work_types.set([work_type])
-        report.work_type_options.set([work_type_option])
+        report.work_types.set(work_types)
 
         for detail_data in details_data:
             WorkDetail.objects.create(hourly_report=report, **detail_data)
 
         return report
 
+    # ---------------------------
+    # UPDATE
+    # ---------------------------
     def update(self, instance, validated_data):
-        # Extract nested fields
-        details_data = validated_data.pop("details", None)
-        work_type = validated_data.pop("work_types", None)
-        work_type_option = validated_data.pop("work_type_options", None)
+        details_data = validated_data.pop('details', None)
+        work_types = validated_data.pop('work_types', None)
 
-        # Update main fields
+        # Update fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
-        # Update single work type
-        if work_type:
-            instance.work_types.set([work_type])
-
-        # Update single work type option
-        if work_type_option:
-            instance.work_type_options.set([work_type_option])
+        # Update work types
+        if work_types is not None:
+            instance.work_types.set(work_types)
 
         # Update details
         if details_data is not None:
             instance.details.all().delete()
-            for detail in details_data:
-                WorkDetail.objects.create(hourly_report=instance, **detail)
+            for detail_data in details_data:
+                WorkDetail.objects.create(hourly_report=instance, **detail_data)
 
         return instance
 
+    # Nested output
     def to_representation(self, instance):
-        from .serializers import HourlyReportSerializer
         return HourlyReportSerializer(instance, context=self.context).data
+
+class DailySummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DailySummaryReport
+        fields = [
+            'id',
+            'report_date',
+            'summary_text',
+            'total_hours',
+        ]
+
+    def validate(self, data):
+        user = self.context['request'].user
+        report_date = data.get('report_date')
+
+        # ❌ Block summary if hourly reports exist
+        if HourlyReport.objects.filter(user=user, report_date=report_date).exists():
+            raise serializers.ValidationError(
+                "Hourly Reports already exist for this date. Daily Summary is not allowed."
+            )
+
+        return data
+
+    def create(self, validated_data):
+        return DailySummaryReport.objects.create(
+            user=self.context['request'].user,
+            **validated_data
+        )
+
 
 class ProjectSerializer(serializers.ModelSerializer):
     remaining_plots = serializers.ReadOnlyField()

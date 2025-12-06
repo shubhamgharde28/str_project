@@ -2,7 +2,37 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import MonthlyTarget, Sale, SalaryConfig
-from attendance.models import WorkType, WorkTypeOption, HourlyReport, WorkDetail, WorkPlan, WorkPlanTitle, UserProfile
+from attendance.models import WorkType, HourlyReport, WorkDetail, WorkPlan, WorkPlanTitle, UserProfile, Project, DailySummaryReport
+
+class ProjectSerializer_admin(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    remaining_plots = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Project
+        fields = [
+            'id',
+            'created_by',
+            'created_by_name',
+            'name',
+            'project_type',
+            'description',
+            'total_plots',
+            'available_plots',
+            'sold_plots',
+            'remaining_plots',
+            'address',
+            'city',
+            'state',
+            'pincode',
+            'launch_date',
+            'expected_completion_date',
+            'is_active',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'created_by', 'created_by_name', 'created_at', 'updated_at', 'remaining_plots']
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -80,17 +110,13 @@ class WorkPlanSerializer_admin(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_by', 'type', 'created_at']
 
+
 class WorkTypeSerializer_admin(serializers.ModelSerializer):
     class Meta:
         model = WorkType
         fields = '__all__'
 
-class WorkTypeOptionSerializer_admin(serializers.ModelSerializer):
-    work_type_name = serializers.CharField(source='work_type.name', read_only=True)
 
-    class Meta:
-        model = WorkTypeOption
-        fields = ['id', 'work_type', 'work_type_name', 'name', 'description']
 
 class HourlyReportSerializer_admin(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.username', read_only=True)
@@ -99,21 +125,79 @@ class HourlyReportSerializer_admin(serializers.ModelSerializer):
         model = HourlyReport
         fields = [
             'id', 'user', 'user_name', 'report_date', 'report_hour',
-            'location_latitude', 'location_longitude', 'work_done', 'reason_not_done',
-            'work_types', 'work_type_options', 'created_at', 'updated_at'
+            'location_latitude', 'location_longitude', 'work_done',
+            'reason_not_done', 'work_types', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
+
 class WorkDetailSerializer_admin(serializers.ModelSerializer):
     hourly_report_info = serializers.CharField(source='hourly_report.__str__', read_only=True)
-    work_type_option_name = serializers.CharField(source='work_type_option.name', read_only=True)
+    work_type_name = serializers.CharField(source='work_type.name', read_only=True)
     project_name = serializers.CharField(source='project.name', read_only=True)
 
     class Meta:
         model = WorkDetail
         fields = [
-            'id', 'hourly_report', 'hourly_report_info', 'work_type_option',
-            'work_type_option_name', 'project', 'project_name', 'customer_name',
-            'mobile_number', 'plot_number', 'customer_response', 'reason_not_interested',
-            'site_visit_done', 'meeting_done', 'booking_done', 'next_followup_date'
+            'id',
+            'hourly_report', 'hourly_report_info',
+
+            'work_type', 'work_type_name',
+            'project', 'project_name',
+
+            'customer_name',
+            'mobile_number',
+            'plot_number',
+
+            'customer_response',
+            'reason_not_interested',
+            'other_reason',
+
+            'site_visit_done',
+            'meeting_done',
+            'booking_done',
+
+            'next_followup_date',
+
+            'area',                      
+            'rate',
+            'total_value',
+            'tcm',
+            'value_per_sqft',
+
+            'feedback',
+
+            'created_at',
+            'updated_at'
         ]
+        read_only_fields = ['created_at', 'updated_at']
+
+
+class DailySummarySerializer_admin(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = DailySummaryReport
+        fields = [
+            'id', 'user', 'user_name',
+            'report_date',
+            'summary_text',
+            'total_hours',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'user_name', 'created_at', 'updated_at']
+
+    def validate(self, data):
+        """
+        Prevent creating a summary if hourly reports exist for that user/date.
+        Admin may still want to override — change this behaviour if required.
+        """
+        user = data.get('user')
+        report_date = data.get('report_date')
+        if user and report_date:
+            if HourlyReport.objects.filter(user=user, report_date=report_date).exists():
+                raise serializers.ValidationError(
+                    "Hourly Reports already exist for this user and date. Create summary with caution or delete hourly reports first."
+                )
+        return data

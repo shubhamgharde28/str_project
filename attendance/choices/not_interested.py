@@ -1,0 +1,16 @@
+NOT_INTERESTED_REASON_CHOICES = [
+    ('budget_issue', 'Budget Issue'),
+    ('location_not_suitable', 'Location Not Suitable'),
+    ('price_too_high', 'Price Too High'),
+    ('project_not_liked', 'Project Not Liked'),
+    ('size_not_suitable', 'Size/Area Not Suitable'),
+    ('not_required_now', 'Not Required Right Now'),
+    ('already_purchased', 'Already Purchased'),
+    ('family_not_agree', 'Family Not Agree'),
+    ('loan_not_approved', 'Loan Not Approved'),
+    ('documents_concern', 'Document Issues Concern'),
+    ('amenities_not_enough', 'Amenities Not Enough'),
+    ('too_far_city', 'Too Far From City'),
+    ('timing_issue', 'Time Not Right'),
+    ('no_investment_plan', 'No Investment Plan'),
+]
