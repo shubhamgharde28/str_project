@@ -56,3 +56,63 @@ class SalaryConfig(models.Model):
 
     def __str__(self):
         return f"Salary Config for {self.user.username}"
+
+
+from django.db import models
+from django.contrib.auth.models import User
+from attendance.models import Project  
+
+
+from decimal import Decimal
+from django.db import models
+from django.contrib.auth.models import User
+
+class Incentive(models.Model):
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='incentives')
+
+    # Project & Plot Details
+    project = models.ForeignKey('attendance.Project', on_delete=models.SET_NULL, null=True, blank=True, related_name='incentives')
+    plot_number = models.CharField(max_length=50)
+    mouza = models.CharField(max_length=100, blank=True, null=True)
+
+    # Pricing & Commission
+    total_price = models.DecimalField(max_digits=12, decimal_places=2)
+    commission_price = models.DecimalField(max_digits=12, decimal_places=2)
+
+    advance_commission = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    total_paid_commission = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+
+    # Auto-calculated
+    balance_commission = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+
+    # Optional fields
+    deal_date = models.DateField(null=True, blank=True)
+    customer_name = models.CharField(max_length=150, blank=True, null=True)
+    customer_mobile = models.CharField(max_length=15, blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+
+    # System fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    def save(self, *args, **kwargs):
+        """
+        Proper Decimal-based calculation of balance commission.
+        """
+
+        commission = self.commission_price or Decimal("0.00")
+        advance = self.advance_commission or Decimal("0.00")
+        paid = self.total_paid_commission or Decimal("0.00")
+
+        # Formula:
+        # Balance Commission = Commission Price - (Advance + Paid)
+        self.balance_commission = commission - (advance + paid)
+
+        super().save(*args, **kwargs)
+
+
+    def __str__(self):
+        return f"Incentive - {self.user.username} - Plot {self.plot_number}"
+

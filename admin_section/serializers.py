@@ -200,4 +200,53 @@ class DailySummarySerializer_admin(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "Hourly Reports already exist for this user and date. Create summary with caution or delete hourly reports first."
                 )
-        return data
+        return 
+    
+
+
+# admin_section/serializers.py
+
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from attendance.models import Project
+from .models import Incentive
+
+
+class IncentiveSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.username', read_only=True)
+    project_name = serializers.CharField(source='project.name', read_only=True)
+
+    class Meta:
+        model = Incentive
+        fields = [
+            'id',
+
+            'user', 'user_name',
+            'project', 'project_name',
+
+            'plot_number',
+            'mouza',
+
+            'total_price',
+            'commission_price',
+            'advance_commission',
+            'total_paid_commission',   # ✅ FIXED (added)
+            'balance_commission',
+
+            'deal_date',
+            'customer_name',
+            'customer_mobile',
+
+            'remarks',
+
+            'created_at',
+            'updated_at',
+        ]
+
+        # Balance auto-calculated → read-only
+        read_only_fields = [
+            'id',
+            'balance_commission',
+            'created_at',
+            'updated_at'
+        ]

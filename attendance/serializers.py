@@ -326,3 +326,13 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = '__all__'
 
+
+# admin_section/serializers.py
+
+from rest_framework import serializers
+from admin_section.models import Incentive
+
+class IncentiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Incentive
+        fields = '__all__'

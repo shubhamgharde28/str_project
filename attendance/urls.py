@@ -1,10 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView, DailySummaryCreateView, DailySummaryListView, DailySummaryUpdateView
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView, DailySummaryCreateView, DailySummaryListView, DailySummaryUpdateView, UserIncentiveViewSet
 
 router = DefaultRouter()
 router.register(r"user-salary-slip", UserSalarySlipViewSet, basename="user-salary-slip")
+router.register('my-incentives', UserIncentiveViewSet, basename='my-incentives')
 
 urlpatterns = [
     path('', include(router.urls)),

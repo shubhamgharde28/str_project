@@ -831,3 +831,20 @@ class SimpleHourlyReportCheckAPI(APIView):
         return Response({
             "message": "You need to submit your hourly report."
         })
+
+
+# admin_section/views.py
+
+from rest_framework import viewsets, permissions
+from admin_section.models import Incentive
+from .serializers import IncentiveSerializer
+
+class UserIncentiveViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Returns incentive details for the logged-in user only.
+    """
+    serializer_class = IncentiveSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Incentive.objects.filter(user=self.request.user)

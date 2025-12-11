@@ -913,3 +913,16 @@ class DashboardViewSet(ViewSet):
             "customer_response": customer_response,
             "project_wise_work_details": list(project_details),
         })
+
+
+# admin_section/views.py
+
+from rest_framework import viewsets, permissions
+from .models import Incentive
+from .serializers import IncentiveSerializer
+
+
+class IncentiveViewSet(viewsets.ModelViewSet):
+    queryset = Incentive.objects.select_related('user', 'project').all()
+    serializer_class = IncentiveSerializer
+    permission_classes = [permissions.IsAuthenticated]
