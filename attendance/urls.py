@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView, DailySummaryCreateView, DailySummaryListView, DailySummaryUpdateView, UserIncentiveViewSet, NotificationListAPIView,NotificationReadAPIView
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView, DailySummaryCreateView, DailySummaryListView, DailySummaryUpdateView, UserIncentiveViewSet
 
 router = DefaultRouter()
 router.register(r"user-salary-slip", UserSalarySlipViewSet, basename="user-salary-slip")
@@ -44,17 +44,6 @@ urlpatterns = [
 
     path("simple-hourly-check/", SimpleHourlyReportCheckAPI.as_view()),
 
-    path(
-        'notifications/',
-        NotificationListAPIView.as_view(),
-        name='notification-list'
-    ),
 
-    # ✅ Mark single notification as read
-    path(
-        'notifications/<int:pk>/read/',
-        NotificationReadAPIView.as_view(),
-        name='notification-read'
-    ),
 
-   ]
+]

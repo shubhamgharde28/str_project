@@ -222,7 +222,7 @@ class DailySummaryReport(models.Model):
 
     summary_text = models.TextField()  # Whole day work summary
     total_hours = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
-
+    follow_up_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -233,22 +233,8 @@ class DailySummaryReport(models.Model):
         return f"{self.user.username} - Summary - {self.report_date}"
 
 
-class Notification(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="notifications"
-    )
-    title = models.CharField(max_length=255)
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
 
-    workplan = models.ForeignKey(
-        WorkPlan, on_delete=models.SET_NULL, null=True, blank=True
-    )
-    work_detail = models.ForeignKey(
-        WorkDetail, on_delete=models.SET_NULL, null=True, blank=True
-    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.user.username} - {self.title}"
+
+

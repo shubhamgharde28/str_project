@@ -24,10 +24,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'drf_yasg',
-    'channels',
+   
 
     'attendance',
     'admin_section',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -63,11 +64,11 @@ WSGI_APPLICATION = 'str_project.wsgi.application'
 
 
 DATABASES = {
-    'SQLT': {
+    'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
-    'default': {
+    'SQLT': {
         'ENGINE': config('DB_ENGINE'),
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),
@@ -78,14 +79,6 @@ DATABASES = {
 }
 
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-        },
-    },
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {

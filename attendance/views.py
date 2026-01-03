@@ -851,37 +851,3 @@ class UserIncentiveViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 
-from .models import Notification
-class NotificationListAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        qs = Notification.objects.filter(
-            user=request.user
-        ).order_by('-created_at')
-
-        data = [
-            {
-                "id": n.id,
-                "title": n.title,
-                "message": n.message,
-                "is_read": n.is_read,
-                "created_at": n.created_at
-            } for n in qs
-        ]
-
-        return Response({
-            "unread_count": qs.filter(is_read=False).count(),
-            "notifications": data
-        })
-
-
-class NotificationReadAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, pk):
-        Notification.objects.filter(
-            id=pk, user=request.user
-        ).update(is_read=True)
-
-        return Response({"message": "Marked as read"})
