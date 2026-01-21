@@ -1,0 +1,981 @@
+{
+	"info": {
+		"_postman_id": "06845472-0725-46ed-bc0a-7894088f370a",
+		"name": "str_admin_api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34661114"
+	},
+	"item": [
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyOTY2MjE1LCJpYXQiOjE3NjI5NjI2MTUsImp0aSI6IjUzOTcwYzliNDE0ZjQ1YjhhNmQ2NWM4ZDA4N2RkMTkwIiwidXNlcl9pZCI6IjEifQ.nnU46dfJHdf0pNOV_0XLraM_ad1CjSB4U47134pyHZQ",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"admin\",\r\n  \"password\": \"Admin@123\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "shubhamgharde29.pythonanywhere.com/api/token/",
+					"host": [
+						"shubhamgharde29",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"token",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "approve_user",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2OTA1MTUxLCJpYXQiOjE3NjY5MDE1NTEsImp0aSI6IjY3YTU1MTM5YzE2ODRmNWZiZTJiMWM2ODlkZTAwM2JiIiwidXNlcl9pZCI6IjEifQ.bCIPyAK8fbbwrfw8RwJrFzi-yyZgcPVy9BYLAtZlanc",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "shubhamgharde29.pythonanywhere.com/api/admin_section/users/3/approve/",
+					"host": [
+						"shubhamgharde29",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"admin_section",
+						"users",
+						"3",
+						"approve",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user_data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0ODY4NDQ2LCJpYXQiOjE3NjQ4NjQ4NDYsImp0aSI6IjhjMjMzYTY1NTMzMDQ2MjZhMzI5MTY0Yjg2ODQ5OTg4IiwidXNlcl9pZCI6IjEifQ.a7sDBamgFL2HbpPIzFMbNUXaqPJPtLWqFg_N8tMda34",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/users/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"users",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_user_by_id",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0ODY4NDQ2LCJpYXQiOjE3NjQ4NjQ4NDYsImp0aSI6IjhjMjMzYTY1NTMzMDQ2MjZhMzI5MTY0Yjg2ODQ5OTg4IiwidXNlcl9pZCI6IjEifQ.a7sDBamgFL2HbpPIzFMbNUXaqPJPtLWqFg_N8tMda34",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/users/2/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"users",
+						"2",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "edit_user_by_id",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyOTY2MjE1LCJpYXQiOjE3NjI5NjI2MTUsImp0aSI6IjUzOTcwYzliNDE0ZjQ1YjhhNmQ2NWM4ZDA4N2RkMTkwIiwidXNlcl9pZCI6IjEifQ.nnU46dfJHdf0pNOV_0XLraM_ad1CjSB4U47134pyHZQ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"shubhamgharde29@gmail.com\",\r\n  \"email\": \"shubhamgharde29@gmail.com\",\r\n  \"profile\": {\r\n    \"first_name\": \"shubham\",\r\n    \"last_name\": \"gharde123\",\r\n    \"designation\": \"Sales Manager\",\r\n    \"department\": \"Marketing\",\r\n    \"mobile_number\": \"22222222\",\r\n    \"gender\": \"male\",\r\n    \"marital_status\": \"single\",\r\n    \"aadhaar_number\": \"123456789012\",\r\n    \"pan_number\": \"ABCDE1234F\",\r\n    \"locality\": \"Pune\",\r\n    \"city\": \"Pune\",\r\n    \"state\": \"Maharashtra\",\r\n    \"pincode\": \"411001\"\r\n  }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/users/5/edit/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"users",
+						"5",
+						"edit",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete_user",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyOTY2MjE1LCJpYXQiOjE3NjI5NjI2MTUsImp0aSI6IjUzOTcwYzliNDE0ZjQ1YjhhNmQ2NWM4ZDA4N2RkMTkwIiwidXNlcl9pZCI6IjEifQ.nnU46dfJHdf0pNOV_0XLraM_ad1CjSB4U47134pyHZQ",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/users/5/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"users",
+						"5",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create target",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1NTI5LCJpYXQiOjE3NjUwMzE5MjksImp0aSI6ImM0Yjg4YjYwOTQ5NjRjMjFhMTYxNzYxNDUxNDUwNjMwIiwidXNlcl9pZCI6IjEifQ.wgkvcH78TT7WORr4HNrX4jygaLq-7hmMOZtkrV8yRqk",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"user_id\": 2,\r\n  \"month\": 7,\r\n  \"year\": 2025,\r\n  \"target_area\": 1500,\r\n  \"carry_forward\": 0\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/targets/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"targets",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create sale",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1NTI5LCJpYXQiOjE3NjUwMzE5MjksImp0aSI6ImM0Yjg4YjYwOTQ5NjRjMjFhMTYxNzYxNDUxNDUwNjMwIiwidXNlcl9pZCI6IjEifQ.wgkvcH78TT7WORr4HNrX4jygaLq-7hmMOZtkrV8yRqk",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"user_id\": 2,\r\n  \"month\": 7,\r\n  \"year\": 2025,\r\n  \"area_sold\": 1200\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/sales/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"sales",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "target_status",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1NTI5LCJpYXQiOjE3NjUwMzE5MjksImp0aSI6ImM0Yjg4YjYwOTQ5NjRjMjFhMTYxNzYxNDUxNDUwNjMwIiwidXNlcl9pZCI6IjEifQ.wgkvcH78TT7WORr4HNrX4jygaLq-7hmMOZtkrV8yRqk",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/user-target-status/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"user-target-status",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "target-sale-dashboard",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0ODY4NDQ2LCJpYXQiOjE3NjQ4NjQ4NDYsImp0aSI6IjhjMjMzYTY1NTMzMDQ2MjZhMzI5MTY0Yjg2ODQ5OTg4IiwidXNlcl9pZCI6IjEifQ.a7sDBamgFL2HbpPIzFMbNUXaqPJPtLWqFg_N8tMda34",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/target-sale-dashboard/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"target-sale-dashboard",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "filter-target-sale",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyOTYyMDAwLCJpYXQiOjE3NjI5NTg0MDAsImp0aSI6IjZhMmRjMGM4MzZjOTQ2MzE4MWVmMzI2MmZkZDI5MGZmIiwidXNlcl9pZCI6IjEifQ.p0LCPHRuvYHzgGg75aS-upHS6-mx1JbL3eBxuPnqhaw",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/target-sale-dashboard/?year=2025&month=11",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"target-sale-dashboard",
+						""
+					],
+					"query": [
+						{
+							"key": "year",
+							"value": "2025"
+						},
+						{
+							"key": "month",
+							"value": "11"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "daily_attendance_data_dashboard",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMjI0MjcyLCJpYXQiOjE3NjMyMjA2NzIsImp0aSI6IjllYzFmNmVkYzNiNDRmMTU5YjM1YTAxNzViY2Y3ODRhIiwidXNlcl9pZCI6IjEifQ.L5aRpLaTQ9zn9LRPAQgB5UVnUza4laMEQ0VAufFnTUE",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/attendance-dashboard/daily/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"attendance-dashboard",
+						"daily",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "monthly_attendance_data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMjI0MjcyLCJpYXQiOjE3NjMyMjA2NzIsImp0aSI6IjllYzFmNmVkYzNiNDRmMTU5YjM1YTAxNzViY2Y3ODRhIiwidXNlcl9pZCI6IjEifQ.L5aRpLaTQ9zn9LRPAQgB5UVnUza4laMEQ0VAufFnTUE",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/attendance-dashboard/monthly/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"attendance-dashboard",
+						"monthly",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "filter_monthly_attendance_data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMzEwMTgwLCJpYXQiOjE3NjMzMDY1ODAsImp0aSI6IjljZmUwYThmY2NiZjQwNmFhMTJhYzQwNDdmOGJiOGRlIiwidXNlcl9pZCI6IjEifQ.A1x4ZpbKzmDrQzXZx4WE7l8z1MITxJ6TyiJAH2xwTko",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/attendance-dashboard/monthly/?year=2025&month=11",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"attendance-dashboard",
+						"monthly",
+						""
+					],
+					"query": [
+						{
+							"key": "year",
+							"value": "2025"
+						},
+						{
+							"key": "month",
+							"value": "11"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "workplan-titles",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyOTY4Mzk2LCJpYXQiOjE3NjI5NjQ3OTYsImp0aSI6Ijk5OGI1ZjYxNWU5MjQxMGI5ZmMyN2Q3ZDAwNjdkYWFhIiwidXNlcl9pZCI6IjEifQ.DEs6pF2_VXOzFvpKkhxKQ0o5MHFBjIlHkiEodU7I8bc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"monthly Sales Report1\",\r\n  \"description\": \"Report for tracking daily sales performance\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/workplan-titles/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"workplan-titles",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "admin-workplans",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMDUwODA1LCJpYXQiOjE3NjMwNDcyMDUsImp0aSI6IjgzNzJhNTJjNjFmNDRkY2NhOTZhYTQ0OWQzMTJkMjEwIiwidXNlcl9pZCI6IjEifQ.71-OUMF8bx6THvf_v3U2N2Xl6t-bb3h8pKy7dK2I7og",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"coworkers\": [2, 3],\r\n  \"titles\": [1, 2],\r\n  \"description\": \"Admin assigned work for sales visit\",\r\n  \"status\": \"pending\",\r\n  \"date\": \"2025-11-13\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/admin-workplans/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"admin-workplans",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user-workplans",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMDUwODA1LCJpYXQiOjE3NjMwNDcyMDUsImp0aSI6IjgzNzJhNTJjNjFmNDRkY2NhOTZhYTQ0OWQzMTJkMjEwIiwidXNlcl9pZCI6IjEifQ.71-OUMF8bx6THvf_v3U2N2Xl6t-bb3h8pKy7dK2I7og",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"coworkers\": [2, 3],\r\n  \"titles\": [1, 4],\r\n  \"description\": \"Follow-up meeting with client for new layout approval\",\r\n  \"status\": \"pending\",\r\n  \"date\": \"2025-11-14\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/user-workplans/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"user-workplans",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user-workplans-edit",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMDUwODA1LCJpYXQiOjE3NjMwNDcyMDUsImp0aSI6IjgzNzJhNTJjNjFmNDRkY2NhOTZhYTQ0OWQzMTJkMjEwIiwidXNlcl9pZCI6IjEifQ.71-OUMF8bx6THvf_v3U2N2Xl6t-bb3h8pKy7dK2I7og",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"coworkers\": [2, 4],\r\n  \"titles\": [1, 3],\r\n  \"description\": \"Updated workplan — added new meeting schedule and client call follow-up.\",\r\n  \"status\": \"in_process\",\r\n  \"date\": \"2025-11-15\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/user-workplans/10/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"user-workplans",
+						"10",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "worktypes",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1NTI5LCJpYXQiOjE3NjUwMzE5MjksImp0aSI6ImM0Yjg4YjYwOTQ5NjRjMjFhMTYxNzYxNDUxNDUwNjMwIiwidXNlcl9pZCI6IjEifQ.wgkvcH78TT7WORr4HNrX4jygaLq-7hmMOZtkrV8yRqk",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Booking Closed\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/worktypes/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"worktypes",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "hourly-reports",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0NTI5NjQwLCJpYXQiOjE3NjQ1MjYwNDAsImp0aSI6ImI2MzJiMTBlMzBiZDRhYjdiOTc5MjY4NmQyZmE5YjQ3IiwidXNlcl9pZCI6IjEifQ.oGPwRG4i_ZDgBqliXynvzRH51GgYNuDAhniITREoZ_w",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"report_date\": \"2025-01-15\",\r\n  \"report_hour\": 11,\r\n  \"location_latitude\": 21.145800,\r\n  \"location_longitude\": 79.088200,\r\n  \"work_done\": \"no\",\r\n  \"reason_not_done\": \"Client was unavailable\",\r\n  \"work_types\": [1, 3, 5]\r\n}\r\n"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/hourly-reports/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"hourly-reports",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "summary daily report",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1NTI5LCJpYXQiOjE3NjUwMzE5MjksImp0aSI6ImM0Yjg4YjYwOTQ5NjRjMjFhMTYxNzYxNDUxNDUwNjMwIiwidXNlcl9pZCI6IjEifQ.wgkvcH78TT7WORr4HNrX4jygaLq-7hmMOZtkrV8yRqk",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "\r\n{\r\n  \"user\": 2,\r\n  \"report_date\": \"2025-02-10\",\r\n  \"summary_text\": \"Visited 5 clients, 2 meetings, collected 1 booking\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/daily-summaries/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"daily-summaries",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "work-details",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMDUwODA1LCJpYXQiOjE3NjMwNDcyMDUsImp0aSI6IjgzNzJhNTJjNjFmNDRkY2NhOTZhYTQ0OWQzMTJkMjEwIiwidXNlcl9pZCI6IjEifQ.71-OUMF8bx6THvf_v3U2N2Xl6t-bb3h8pKy7dK2I7og",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"hourly_report\": 1,\r\n  \"work_type\": 2,\r\n  \"project\": 3,\r\n\r\n  \"customer_name\": \"Ramesh Kumar\",\r\n  \"mobile_number\": \"9876543210\",\r\n  \"plot_number\": \"P-45\",\r\n\r\n  \"customer_response\": \"not_interested\",\r\n  \"reason_not_interested\": \"high_budget\",\r\n  \"other_reason\": \"Customer needs more time\",\r\n\r\n  \"site_visit_done\": true,\r\n  \"meeting_done\": false,\r\n  \"booking_done\": false,\r\n\r\n  \"next_followup_date\": \"2025-01-20\",\r\n\r\n  \"area\": 1200.50,\r\n  \"rate\": 1500.00,\r\n  \"total_value\": 1800000.00,\r\n  \"tcm\": 100000,\r\n  \"value_per_sqft\": 1500.00,\r\n\r\n  \"feedback\": \"Customer is interested but will decide in 15 days\"\r\n}\r\n"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/work-details/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"work-details",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Dashboard",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMjA3MTIzLCJpYXQiOjE3NjMyMDM1MjMsImp0aSI6ImRjMGQ5MDYyMmUwNjQ5ODE4MGFhYTIxOTNlNGRhN2Y0IiwidXNlcl9pZCI6IjEifQ.iefWx3aInDGqPrTYGdNgBlivKNNQ62MrmhOQcUh357M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "\r\n"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/dashboard/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"dashboard",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "salary",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMzEwMTgwLCJpYXQiOjE3NjMzMDY1ODAsImp0aSI6IjljZmUwYThmY2NiZjQwNmFhMTJhYzQwNDdmOGJiOGRlIiwidXNlcl9pZCI6IjEifQ.A1x4ZpbKzmDrQzXZx4WE7l8z1MITxJ6TyiJAH2xwTko",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"user\": 2,\r\n  \"monthly_salary\": 18000,\r\n  \"working_days\": 30,\r\n  \"late_mark_after\": \"09:30:00\",\r\n  \"late_deduction_per_minute\": 15,\r\n  \"early_leave_before\": \"17:30:00\",\r\n  \"early_leave_deduction_per_minute\": 0\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/salary/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"salary",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "project",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1NTI5LCJpYXQiOjE3NjUwMzE5MjksImp0aSI6ImM0Yjg4YjYwOTQ5NjRjMjFhMTYxNzYxNDUxNDUwNjMwIiwidXNlcl9pZCI6IjEifQ.wgkvcH78TT7WORr4HNrX4jygaLq-7hmMOZtkrV8yRqk",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Narsala\",\r\n  \"project_type\": \"residential\",\r\n  \"description\": \"Premium residential apartments with 2 & 3 BHK flats\",\r\n  \"total_plots\": 100,\r\n  \"available_plots\": 60,\r\n  \"sold_plots\": 40,\r\n  \"address\": \"123 Main Street\",\r\n  \"city\": \"Pune\",\r\n  \"state\": \"Maharashtra\",\r\n  \"pincode\": \"411001\",\r\n  \"launch_date\": \"2025-01-01\",\r\n  \"expected_completion_date\": \"2027-12-31\",\r\n  \"is_active\": true\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/admin_section/projects-admin/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"admin_section",
+						"projects-admin",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "incentives",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2OTA1MTUxLCJpYXQiOjE3NjY5MDE1NTEsImp0aSI6IjY3YTU1MTM5YzE2ODRmNWZiZTJiMWM2ODlkZTAwM2JiIiwidXNlcl9pZCI6IjEifQ.bCIPyAK8fbbwrfw8RwJrFzi-yyZgcPVy9BYLAtZlanc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user\": 2,\r\n    \"project\": 1,\r\n    \"plot_number\": \"A-25\",\r\n    \"mouza\": \"Jamtha\",\r\n    \"total_price\": \"2750000.00\",\r\n    \"commission_price\": \"200000.00\",\r\n    \"advance_commission\": \"40000.00\",\r\n    \"total_paid_commission\": \"20000.00\",\r\n    \"deal_date\": \"2025-12-05\",\r\n    \"customer_name\": \"Neha Kulkarni\",\r\n    \"customer_mobile\": \"9090909090\",\r\n    \"remarks\": \"Token received, balance pending\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "shubhamgharde29.pythonanywhere.com/api/admin_section/incentives/",
+					"host": [
+						"shubhamgharde29",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"admin_section",
+						"incentives",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

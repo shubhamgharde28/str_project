@@ -93,6 +93,7 @@ class Attendance(models.Model):
     check_out_time = models.DateTimeField(null=True, blank=True)
     check_out_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     check_out_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    is_half_day = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user', 'date')
@@ -100,6 +101,32 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.date}"
+
+    @property
+    def status(self):
+        """
+        Compute attendance status based on check-in and check-out records.
+        Returns: 'present', 'half_day', or 'absent'
+        """
+        if self.check_in_time and self.is_half_day:
+            return 'half_day'
+        elif self.check_in_time and self.check_out_time:
+            return 'present'
+        elif self.check_in_time and not self.check_out_time:
+            # Checked in but not checked out - consider as present if check-in exists
+            return 'present'
+        else:
+            return 'absent'
+
+    @property
+    def status_display(self):
+        """Return human-readable status"""
+        status_map = {
+            'present': '✅ Present',
+            'absent': '❌ Absent',
+            'half_day': '⚠️ Half Day'
+        }
+        return status_map.get(self.status, 'Unknown')
 
 
 # workplan models 

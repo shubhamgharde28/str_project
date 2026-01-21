@@ -1,0 +1,1221 @@
+{
+	"info": {
+		"_postman_id": "870d89a2-9fa7-4f62-a94b-e94488e8a3d4",
+		"name": "str_project",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34661114"
+	},
+	"item": [
+		{
+			"name": "sign_up",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"shubhamgharde28@gmail.com\",\r\n  \"password\": \"Admin@123\",\r\n  \"confirm_password\": \"Admin@123\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "shubhamgharde29.pythonanywhere.com/api/signup/",
+					"host": [
+						"shubhamgharde29",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"signup",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "verify_otp",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"shubhamgharde28@gmail.com\",\r\n  \"otp\": \"148902\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "shubhamgharde29.pythonanywhere.com/api/verify-otp/",
+					"host": [
+						"shubhamgharde29",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"verify-otp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"shubhamgharde28@gmail.com\",\r\n  \"password\": \"Admin@123\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "shubhamgharde29.pythonanywhere.com/api/login/",
+					"host": [
+						"shubhamgharde29",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "resend_otp",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"shubhamgharde28@gmail.com\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/resend-otp/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"resend-otp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "complete_profile",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1NjEzLCJpYXQiOjE3NjUwMzIwMTMsImp0aSI6Ijk0YjlhMjY4NGQyYTQzODRhYmY0MWY3ZjJhYWFkMTQ3IiwidXNlcl9pZCI6IjIifQ.7ZI5_rHhRsMtU_mWC4ehe1KUC9OgI8aN2jupS1iHeN8",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"first_name\": \"shubham\",\r\n    \"last_name\": \"gharde28\",\r\n    \"designation\": \"Software Engineer\",\r\n    \"department\": \"IT\",\r\n    \"mobile_number\": \"111111111\",\r\n    \"date_of_birth\": \"1995-05-20\",\r\n    \"gender\": \"male\",\r\n    \"marital_status\": \"single\",\r\n    \"aadhaar_number\": \"123412341234\",\r\n    \"pan_number\": \"ABCDE1234F\",\r\n    \"locality\": \"MG Road\",\r\n    \"city\": \"Mumbai\",\r\n    \"state\": \"Maharashtra\",\r\n    \"pincode\": \"400001\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/profile/complete/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"profile",
+						"complete",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "profile get",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1NjEzLCJpYXQiOjE3NjUwMzIwMTMsImp0aSI6Ijk0YjlhMjY4NGQyYTQzODRhYmY0MWY3ZjJhYWFkMTQ3IiwidXNlcl9pZCI6IjIifQ.7ZI5_rHhRsMtU_mWC4ehe1KUC9OgI8aN2jupS1iHeN8",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/profile/complete/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"profile",
+						"complete",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "edit profile",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyNDM0NzM5LCJpYXQiOjE3NjI0MzQ0MzksImp0aSI6IjYxZmJhZTkxNWM2MjQyMWRhMjY4YWJmYzMzOWE4Nzc1IiwidXNlcl9pZCI6IjMifQ.VJRAIlNegJ8sf9ETUt057PcNajRzwLauZo25nuNQxkM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"first_name\": \"shubham\",\r\n    \"last_name\": \"gharde\",\r\n    \"designation\": \"Software Engineer\",\r\n    \"department\": \"IT\",\r\n    \"mobile_number\": \"9\",\r\n    \"date_of_birth\": \"1995-05-20\",\r\n    \"gender\": \"male\",\r\n    \"marital_status\": \"single\",\r\n    \"aadhaar_number\": \"123412341234\",\r\n    \"pan_number\": \"ABCDE1234F\",\r\n    \"locality\": \"MG Road\",\r\n    \"city\": \"Mumbai\",\r\n    \"state\": \"Maharashtra\",\r\n    \"pincode\": \"400001\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/profile/complete/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"profile",
+						"complete",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user_logout",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMjA5OTg3LCJpYXQiOjE3NjMyMDYzODcsImp0aSI6IjgxYzc3NmY2OGYzMTRlZmE5OWY2MGM3OTA0ODRkYTMwIiwidXNlcl9pZCI6IjIifQ.CwaWDMMITsSEP9yDL4TXmo4Ksws222A19A1WO1K_9Qc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2NDUwMjM4NywiaWF0IjoxNzYzMjA2Mzg3LCJqdGkiOiJmMWQzY2FhOGY1MzQ0ZTNlODMzMGIxMzdiMTMxYWMyMyIsInVzZXJfaWQiOiIyIn0.g4wj6SMLYk6EdeI1ufxpxv_4s98PE0uTlH1umZz0jFQ\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/logout/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"logout",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user-salary-slip",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMzEwNzg5LCJpYXQiOjE3NjMzMDcxODksImp0aSI6IjZjMzNhYjAwODNkNzQ4ZjM4YWJkYjRmMTU5ODczMTM0IiwidXNlcl9pZCI6IjIifQ.8dDV3IjUacBAoO4P7VHIsGn4WwdMEm6XlJrxk6D2gkA",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/user-salary-slip/slip/?year=2025&month=11",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"user-salary-slip",
+						"slip",
+						""
+					],
+					"query": [
+						{
+							"key": "year",
+							"value": "2025"
+						},
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						},
+						{
+							"key": "month",
+							"value": "11"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_target",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1OTAyLCJpYXQiOjE3NjUwMzIzMDIsImp0aSI6IjY5NzQ0M2VjZGZmZjQwYjA4YWExMTQ0NDBjNTVlNTcxIiwidXNlcl9pZCI6IjIifQ.M4skRai75WKRKN9NM-9JzB9cl0SnrIqRD7mL7jyx5iQ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/user/2/target-status/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"user",
+						"2",
+						"target-status",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "taget summary",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1OTAyLCJpYXQiOjE3NjUwMzIzMDIsImp0aSI6IjY5NzQ0M2VjZGZmZjQwYjA4YWExMTQ0NDBjNTVlNTcxIiwidXNlcl9pZCI6IjIifQ.M4skRai75WKRKN9NM-9JzB9cl0SnrIqRD7mL7jyx5iQ",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/target/summary/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"target",
+						"summary",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "target-status-filter",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMzEwMTgwLCJpYXQiOjE3NjMzMDY1ODAsImp0aSI6IjljZmUwYThmY2NiZjQwNmFhMTJhYzQwNDdmOGJiOGRlIiwidXNlcl9pZCI6IjEifQ.A1x4ZpbKzmDrQzXZx4WE7l8z1MITxJ6TyiJAH2xwTko",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/user/2/target-status/?year=2026",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"user",
+						"2",
+						"target-status",
+						""
+					],
+					"query": [
+						{
+							"key": "year",
+							"value": "2026"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "check_in",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0NTI3ODcwLCJpYXQiOjE3NjQ1MjQyNzAsImp0aSI6ImM2MjVhNDg5NjA4MDQwMGM4YjkxZTU2NjQ4ZTQxMDU5IiwidXNlcl9pZCI6IjYifQ.6gQPlSCIuQ07dHZQiSNG3rsbBak2FwPHPo7qYU5EqWc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"latitude\": \"21.105617057779234\",\r\n    \"longitude\": \"79.10340782568115\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/attendance/check-in/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"attendance",
+						"check-in",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "check_out",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0NTI3ODcwLCJpYXQiOjE3NjQ1MjQyNzAsImp0aSI6ImM2MjVhNDg5NjA4MDQwMGM4YjkxZTU2NjQ4ZTQxMDU5IiwidXNlcl9pZCI6IjYifQ.6gQPlSCIuQ07dHZQiSNG3rsbBak2FwPHPo7qYU5EqWc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"latitude\": \"19.0760\",\r\n    \"longitude\": \"72.8777\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/attendance/check-out/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"attendance",
+						"check-out",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "attendance data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyNDM1Nzk4LCJpYXQiOjE3NjI0MzU0OTgsImp0aSI6IjAxMjcwNDg3OGVlMjQyOTZiNTIyZmQxOWRmZDljOTdlIiwidXNlcl9pZCI6IjMifQ.urkWC5yIiRqAEZLwoOmXFjrKuKIBkLN8GNvNIZGbfPg",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/attendance/summary/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"attendance",
+						"summary",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "work plan title",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyNzEwNTQ5LCJpYXQiOjE3NjI3MDY5NDksImp0aSI6IjIyNzRkNjZiMWU0MzQxMzJhNGRmYjFlNDdiNzY1ZThkIiwidXNlcl9pZCI6IjMifQ.x0Cd9i8M7L3osDxMwdEStTngXW5cUz07dDYWM3SD7FU",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/workplan-titles/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"workplan-titles",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create_user_workplan",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0MzQ2MzgyLCJpYXQiOjE3NjQzNDI3ODIsImp0aSI6IjE0NmM5MmFkNDMxYzRkMjU4MTg5ZjVkOTU2NzkyYjIzIiwidXNlcl9pZCI6IjYifQ.0hTNjOEN2h7JP5s-XL3mBVYPFqhA0ofNEuwaN8mazGc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"titles\": [1],\r\n  \"description\": \"chori\",\r\n  \"status\": \"pending\",\r\n  \"coworkers\": [],\r\n  \"date\": \"2025-11-17\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/attendance/workplans/user/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"attendance",
+						"workplans",
+						"user",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "work_plan_status_update",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNDUxNDcyLCJpYXQiOjE3NjA0NTExNzIsImp0aSI6ImJkMDAzYjg1N2MzYjQ1M2Q5ZjRhODQ0M2U4OTM1NmE4IiwidXNlcl9pZCI6IjIifQ.-gBpErIhFBstaJqdfG-rmA9YtaEiw7m7FAsQG3VABKs",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"status\": \"completed\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/attendance/workplans/user/2/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"attendance",
+						"workplans",
+						"user",
+						"2",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "work_plan_user_filters",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMDUxMTI5LCJpYXQiOjE3NjMwNDc1MjksImp0aSI6ImEyYjJmZDZkNzMwOTQ4MzFhMjRhZjU4ZjQ3NGQ3NGRjIiwidXNlcl9pZCI6IjYifQ.4wtIdFwm6pSoiYW17XfXqCKBD_2xFoJELU65zEWWwmc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/attendance/workplans/user/all/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"attendance",
+						"workplans",
+						"user",
+						"all",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "daily workplans",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMDgzNjQyLCJpYXQiOjE3NjIwODMzNDIsImp0aSI6IjY0ZmFkMzA4MjU1MTQ2MTFiNWNkZTJiNzIyZWU3NzM5IiwidXNlcl9pZCI6IjMifQ.RVq8J9J5Usinp7-xZgCxDbUEDQwq7B8LxSyg_UfspKM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"shubhamgharde28@gmail.com\",\r\n  \"password\": \"Password123\"\r\n}\r\n"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/workplans/user/all/?filter=daily",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"workplans",
+						"user",
+						"all",
+						""
+					],
+					"query": [
+						{
+							"key": "filter",
+							"value": "daily"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "weekly workplans",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMDgzNzg4LCJpYXQiOjE3NjIwODM0ODgsImp0aSI6ImI4OTY5ZTg1YTI3NjQzY2FiYTQ5NTg2OWMwODdhNDM3IiwidXNlcl9pZCI6IjMifQ.LgDjIwPYw4vU02x8b5fe_2Bw5Xv6ePZY0OHC5WoWSSs",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/workplans/user/all/?filter=weekly",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"workplans",
+						"user",
+						"all",
+						""
+					],
+					"query": [
+						{
+							"key": "filter",
+							"value": "weekly"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "monthly workplans",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMDgzNzg4LCJpYXQiOjE3NjIwODM0ODgsImp0aSI6ImI4OTY5ZTg1YTI3NjQzY2FiYTQ5NTg2OWMwODdhNDM3IiwidXNlcl9pZCI6IjMifQ.LgDjIwPYw4vU02x8b5fe_2Bw5Xv6ePZY0OHC5WoWSSs",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/workplans/user/all/?filter=monthly",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"workplans",
+						"user",
+						"all",
+						""
+					],
+					"query": [
+						{
+							"key": "filter",
+							"value": "monthly"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "project detail",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1OTAyLCJpYXQiOjE3NjUwMzIzMDIsImp0aSI6IjY5NzQ0M2VjZGZmZjQwYjA4YWExMTQ0NDBjNTVlNTcxIiwidXNlcl9pZCI6IjIifQ.M4skRai75WKRKN9NM-9JzB9cl0SnrIqRD7mL7jyx5iQ",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/projects/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"projects",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "work type",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1OTAyLCJpYXQiOjE3NjUwMzIzMDIsImp0aSI6IjY5NzQ0M2VjZGZmZjQwYjA4YWExMTQ0NDBjNTVlNTcxIiwidXNlcl9pZCI6IjIifQ.M4skRai75WKRKN9NM-9JzB9cl0SnrIqRD7mL7jyx5iQ",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/work-types/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"work-types",
+						""
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Hourly Report",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1OTAyLCJpYXQiOjE3NjUwMzIzMDIsImp0aSI6IjY5NzQ0M2VjZGZmZjQwYjA4YWExMTQ0NDBjNTVlNTcxIiwidXNlcl9pZCI6IjIifQ.M4skRai75WKRKN9NM-9JzB9cl0SnrIqRD7mL7jyx5iQ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"report_date\": \"2025-01-05\",\r\n  \"report_hour\": 3,\r\n\r\n  \"location_latitude\": 21.145800,\r\n  \"location_longitude\": 79.088150,\r\n\r\n  \"work_done\": \"yes\",\r\n  \"reason_not_done\": \"\",\r\n\r\n  \"work_types\": [1, 2],\r\n\r\n  \"details\": [\r\n    {\r\n      \"work_type\": 1,\r\n      \"project\": 1,\r\n\r\n      \"customer_name\": \"Ramesh Kumar\",\r\n      \"mobile_number\": \"9876543210\",\r\n      \"plot_number\": \"P-45\",\r\n\r\n      \"customer_response\": \"interested\",\r\n      \"reason_not_interested\": null,\r\n      \"other_reason\": null,\r\n\r\n      \"site_visit_done\": true,\r\n      \"meeting_done\": false,\r\n      \"booking_done\": false,\r\n\r\n      \"next_followup_date\": \"2025-01-20\",\r\n\r\n      \"area\": 1200.50,\r\n      \"rate\": 1500,\r\n      \"total_value\": 1800000,\r\n      \"tcm\": \"Mr. Sagar\",\r\n      \"value_per_sqft\": 1500,\r\n\r\n      \"feedback\": \"Customer wants to visit again with family.\"\r\n    },\r\n\r\n    {\r\n      \"work_type\": 2,\r\n      \"project\": null,\r\n\r\n      \"customer_name\": \"Suresh Patil\",\r\n      \"mobile_number\": \"9988776655\",\r\n      \"plot_number\": \"A-12\",\r\n\r\n      \"customer_response\": \"not_interested\",\r\n      \"reason_not_interested\": \"no_investment_plan\",\r\n      \"other_reason\": \"Budget not matching with expectations\",\r\n\r\n      \"site_visit_done\": false,\r\n      \"meeting_done\": false,\r\n      \"booking_done\": false,\r\n\r\n      \"next_followup_date\": null,\r\n\r\n      \"area\": null,\r\n      \"rate\": null,\r\n      \"total_value\": null,\r\n      \"tcm\": null,\r\n      \"value_per_sqft\": null,\r\n\r\n      \"feedback\": \"Customer will contact later.\"\r\n    }\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/hourly-reports/create/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"hourly-reports",
+						"create",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list-hourly-report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1OTAyLCJpYXQiOjE3NjUwMzIzMDIsImp0aSI6IjY5NzQ0M2VjZGZmZjQwYjA4YWExMTQ0NDBjNTVlNTcxIiwidXNlcl9pZCI6IjIifQ.M4skRai75WKRKN9NM-9JzB9cl0SnrIqRD7mL7jyx5iQ",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/hourly-reports/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"hourly-reports",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list-hourly-report",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1OTAyLCJpYXQiOjE3NjUwMzIzMDIsImp0aSI6IjY5NzQ0M2VjZGZmZjQwYjA4YWExMTQ0NDBjNTVlNTcxIiwidXNlcl9pZCI6IjIifQ.M4skRai75WKRKN9NM-9JzB9cl0SnrIqRD7mL7jyx5iQ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"report_date\": \"2025-01-10\",\r\n  \"report_hour\": 3,\r\n  \"location_latitude\": 21.145800,\r\n  \"location_longitude\": 79.088158,\r\n  \"work_done\": \"yes\",\r\n  \"reason_not_done\": \"\",\r\n  \"work_types\": [1, 2],\r\n\r\n  \"details\": [\r\n    {\r\n      \"work_type\": 2,\r\n      \"project\": 1,\r\n      \r\n      \"customer_name\": \"aaaaaa\",\r\n      \"mobile_number\": \"9876543210\",\r\n      \"plot_number\": \"PLOT-12\",\r\n\r\n      \"customer_response\": \"not_interested\",\r\n      \"reason_not_interested\": \"no_investment_plan\",\r\n      \"other_reason\": \"Customer is busy for 2 months\",\r\n\r\n      \"site_visit_done\": false,\r\n      \"meeting_done\": false,\r\n      \"booking_done\": false,\r\n\r\n      \"next_followup_date\": \"2025-01-10\",\r\n\r\n      \"area\": \"1200.50\",\r\n      \"rate\": \"450.00\",\r\n      \"total_value\": \"540000.00\",\r\n      \"tcm\": \"TCM-123\",\r\n      \"value_per_sqft\": \"450.00\",\r\n\r\n      \"feedback\": \"Customer said to call later.\"\r\n    }\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/hourly-reports/update/1/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"hourly-reports",
+						"update",
+						"1",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "pending hourly report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0ODY4NTExLCJpYXQiOjE3NjQ4NjQ5MTEsImp0aSI6IjdjZDYxMzM0ZWI4YzQ2ZjliYjk0ZjM4Yzg3ZGJhMzNkIiwidXNlcl9pZCI6IjIifQ.iQ4cDnMqIObWvZ8yaw0iVREawfO7SFSHcJhv631XXiQ",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/hourly-reports/pending/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"hourly-reports",
+						"pending",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "summary daily report",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1OTAyLCJpYXQiOjE3NjUwMzIzMDIsImp0aSI6IjY5NzQ0M2VjZGZmZjQwYjA4YWExMTQ0NDBjNTVlNTcxIiwidXNlcl9pZCI6IjIifQ.M4skRai75WKRKN9NM-9JzB9cl0SnrIqRD7mL7jyx5iQ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"report_date\": \"2025-02-10\",\r\n  \"summary_text\": \"Today I visited 4 clients, 1 site visit completed and 1 meeting scheduled for tomorrow.\",\r\n  \"total_hours\": 8.0\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/summary/create/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"summary",
+						"create",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "summary daily report",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0ODcxMTM3LCJpYXQiOjE3NjQ4Njc1MzcsImp0aSI6IjY4NWNlZTdmOGE1ODQ3N2Y4ZGUyMjgzYTVjN2M2YTI2IiwidXNlcl9pZCI6IjIifQ.Pejp2JY7wpKulMFpWkNhwuifSvXvSB3ScNah4bGZvKk",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"report_date\": \"2025-02-10\",\r\n  \"summary_text\": \"Updated summary: 5 clients visited, 2 meetings done.\",\r\n  \"total_hours\": 9.0\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/summary/update/{id}/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"summary",
+						"update",
+						"{id}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "summary list dailt report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MDM1OTAyLCJpYXQiOjE3NjUwMzIzMDIsImp0aSI6IjY5NzQ0M2VjZGZmZjQwYjA4YWExMTQ0NDBjNTVlNTcxIiwidXNlcl9pZCI6IjIifQ.M4skRai75WKRKN9NM-9JzB9cl0SnrIqRD7mL7jyx5iQ",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/summary/list/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"summary",
+						"list",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user_incentives",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2OTA1MjIxLCJpYXQiOjE3NjY5MDE2MjEsImp0aSI6ImI0NzI4MjY5ZDEzOTQ3ZTJiODNiZDQ2MDgzMzBlYWU5IiwidXNlcl9pZCI6IjMifQ.hbakP-FC_GjWj21rJhGIuppDuLJCb7Dl4HISUJuf1gE",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"user\": 2,\r\n  \"project\": 1,\r\n  \"plot_number\": \"A-105\",\r\n  \"mouza\": \"Khapri\",\r\n  \"total_price\": \"350000.00\",\r\n  \"commission_price\": \"25000.00\",\r\n  \"advance_commission\": \"10000.00\",\r\n  \r\n  \"deal_date\": \"2025-01-15\",\r\n  \"customer_name\": \"Ramesh Kumar\",\r\n  \"customer_mobile\": \"9876543210\",\r\n\r\n  \"remarks\": \"Advance paid, registry pending.\"\r\n}\r\n"
+				},
+				"url": {
+					"raw": "shubhamgharde29.pythonanywhere.com/api/my-incentives/",
+					"host": [
+						"shubhamgharde29",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"my-incentives",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "notification_list",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY3Mzc2MzQzLCJpYXQiOjE3NjczNzI3NDMsImp0aSI6IjAxNzhmMDhkNDNhNzQ4YmU5Y2Q4ZjE2MDdkNmUxY2E3IiwidXNlcl9pZCI6IjMifQ.H_Aithh496bVYab27lfpJEFCcmIZbAnivZBSLMzquPc",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "shubhamgharde29.pythonanywhere.com/api/notifications/",
+					"host": [
+						"shubhamgharde29",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"notifications",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,304 @@
+{
+	"info": {
+		"_postman_id": "281e85f6-63c8-47f9-86fd-fd52d2411ade",
+		"name": "Notifications API - str_project",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34661114"
+	},
+	"item": [
+		{
+			"name": "Get Token",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"<username>\",\n  \"password\": \"<password>\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/token/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"token",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Notifications",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/notifications/?notify_date={{today}}&is_read=false",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"notifications",
+						""
+					],
+					"query": [
+						{
+							"key": "notify_date",
+							"value": "{{today}}"
+						},
+						{
+							"key": "is_read",
+							"value": "false"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Notification",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/notifications/:id/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"notifications",
+						":id",
+						""
+					],
+					"variable": [
+						{
+							"key": "id"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Notification (superuser)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"user\": 2,\n  \"message\": \"Reminder for user 2\",\n  \"notify_date\": \"{{today}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/notifications/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"notifications",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Notification (regular user)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"message\": \"My personal reminder\",\n  \"notify_date\": \"{{today}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/notifications/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"notifications",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mark Single Read",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/notifications/:id/mark_read/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"notifications",
+						":id",
+						"mark_read",
+						""
+					],
+					"variable": [
+						{
+							"key": "id"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mark All Read",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/notifications/mark_all_read/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"notifications",
+						"mark_all_read",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Notifications For User (superuser or self)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/notifications/user/{{user_id}}/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"notifications",
+						"user",
+						"{{user_id}}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Unread Count (self or superuser for any user)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/notifications/unread_count/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"notifications",
+						"unread_count",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set collection variable 'today' to current date (YYYY-MM-DD)",
+					"const d = new Date().toISOString().slice(0,10);",
+					"pm.collectionVariables.set('today', d);"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000"
+		},
+		{
+			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "today",
+			"value": "2026-01-03"
+		},
+		{
+			"key": "user_id",
+			"value": "2"
+		}
+	]
+}

@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView, DailySummaryCreateView, DailySummaryListView, DailySummaryUpdateView, UserIncentiveViewSet
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, AdminAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView, DailySummaryCreateView, DailySummaryListView, DailySummaryUpdateView, UserIncentiveViewSet
 
 router = DefaultRouter()
 router.register(r"user-salary-slip", UserSalarySlipViewSet, basename="user-salary-slip")
@@ -23,6 +23,7 @@ urlpatterns = [
     path('attendance/check-in/', AttendanceCheckInView.as_view(), name='attendance-check-in'),
     path('attendance/check-out/', AttendanceCheckOutView.as_view(), name='attendance-check-out'),
     path('attendance/summary/', MonthlyAttendanceSummaryView.as_view(), name='attendance-summary'),
+    path('attendance/admin-summary/', AdminAttendanceSummaryView.as_view(), name='attendance-admin-summary'),
 
     path('target/summary/', TargetSummaryView.as_view(), name='target-summary'),
 

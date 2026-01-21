@@ -1,0 +1,384 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-5678-90ab-cdef-1234567890ab",
+    "name": "STR Project - Attendance & Notifications APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set collection variable 'today' to current date (YYYY-MM-DD)",
+          "const d = new Date().toISOString().slice(0,10);",
+          "pm.collectionVariables.set('today', d);"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "AUTH",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"<email>\",\n  \"password\": \"<password>\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login",
+                ""
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"<email>\",\n  \"password\": \"<password>\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "token",
+                ""
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ATTENDANCE - CHECK-IN/OUT",
+      "item": [
+        {
+          "name": "Check-In (Updated - Half-Day Logic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": \"28.6139\",\n  \"longitude\": \"77.2090\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/attendance/check-in/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "check-in",
+                ""
+              ]
+            },
+            "description": "Check-in endpoint with new half-day logic:\n- Deadline: 10:45 AM (Grace period: 10:30 AM - 10:45 AM)\n- If check-in after 10:45 AM: is_half_day = true\n- Response includes: check_in_time, is_half_day field"
+          }
+        },
+        {
+          "name": "Check-Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": \"28.6139\",\n  \"longitude\": \"77.2090\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/attendance/check-out/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "check-out",
+                ""
+              ]
+            }
+          }
+        },
+        {
+          "name": "Monthly Attendance Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/attendance/summary/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "summary",
+                ""
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "NOTIFICATIONS",
+      "item": [
+        {
+          "name": "List Notifications (Today - Unread)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/?notify_date={{today}}&is_read=false",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "notify_date",
+                  "value": "{{today}}"
+                },
+                {
+                  "key": "is_read",
+                  "value": "false"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List All Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                ""
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Notifications (by User ID)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/user/{{user_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "user",
+                "{{user_id}}",
+                ""
+              ]
+            },
+            "description": "Superuser can query any user; regular users can only view their own"
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/unread_count/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "unread_count",
+                ""
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/:id/mark_read/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                ":id",
+                "mark_read",
+                ""
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/mark_all_read/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "mark_all_read",
+                ""
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Notification (Superuser)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": 2,\n  \"message\": \"Test notification\",\n  \"notify_date\": \"{{today}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/notifications/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                ""
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "today",
+      "value": "2026-01-20"
+    },
+    {
+      "key": "user_id",
+      "value": "2"
+    }
+  ]
+}

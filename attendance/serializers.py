@@ -69,15 +69,18 @@ class AttendanceSerializer(serializers.ModelSerializer):
     last_name = serializers.SerializerMethodField()
     designation = serializers.SerializerMethodField()
     department = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
 
     class Meta:
         model = Attendance
         fields = [
             'id', 'user', 'first_name', 'last_name', 'designation', 'department',
             'date', 'check_in_time', 'check_in_latitude', 'check_in_longitude',
-            'check_out_time', 'check_out_latitude', 'check_out_longitude'
+            'check_out_time', 'check_out_latitude', 'check_out_longitude', 'is_half_day',
+            'status', 'status_display'
         ]
-        read_only_fields = ['user', 'date', 'check_in_time', 'check_out_time']
+        read_only_fields = ['user', 'date', 'check_in_time', 'check_out_time', 'is_half_day', 'status', 'status_display']
 
     def get_first_name(self, obj):
         if hasattr(obj.user, 'profile'):
@@ -93,6 +96,14 @@ class AttendanceSerializer(serializers.ModelSerializer):
         if hasattr(obj.user, 'profile'):
             return obj.user.profile.designation
         return None
+
+    def get_status(self, obj):
+        """Return computed status: present, half_day, or absent"""
+        return obj.status
+
+    def get_status_display(self, obj):
+        """Return human-readable status with emoji"""
+        return obj.status_display
 
     def get_department(self, obj):
         if hasattr(obj.user, 'profile'):

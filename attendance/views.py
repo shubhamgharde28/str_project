@@ -389,6 +389,102 @@ class MonthlyAttendanceSummaryView(APIView):
             "total_absent_days": total_absent_days
         }, status=200)
 
+class AdminAttendanceSummaryView(APIView):
+    """Superuser view to see all employees' attendance with filters"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Only superusers can access this
+        if not request.user.is_superuser:
+            return Response(
+                {"detail": "Only superusers can access this endpoint."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Get filter parameters
+        date_param = request.query_params.get('date')  # YYYY-MM-DD
+        user_id = request.query_params.get('user_id')  # specific user
+        status_filter = request.query_params.get('status')  # present, half_day, absent
+        month = request.query_params.get('month')  # month number
+        year = request.query_params.get('year')  # year number
+
+        # Default to current month/year if not provided
+        today = timezone.localdate()
+        if not month:
+            month = today.month
+        if not year:
+            year = today.year
+
+        # Build query
+        query = Attendance.objects.filter(
+            date__year=year,
+            date__month=month
+        ).select_related('user').order_by('-date', 'user__email')
+
+        # Apply filters
+        if user_id:
+            query = query.filter(user_id=user_id)
+
+        if date_param:
+            try:
+                filter_date = timezone.datetime.strptime(date_param, '%Y-%m-%d').date()
+                query = query.filter(date=filter_date)
+            except ValueError:
+                return Response(
+                    {"detail": "Invalid date format. Use YYYY-MM-DD"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # Filter by status (requires iteration as status is a property)
+        if status_filter:
+            all_records = list(query)
+            query_list = [r for r in all_records if r.status == status_filter]
+        else:
+            query_list = list(query)
+
+        # Calculate summary stats
+        total_records = len(query_list)
+        present_count = sum(1 for r in query_list if r.status == 'present')
+        half_day_count = sum(1 for r in query_list if r.status == 'half_day')
+        absent_count = sum(1 for r in query_list if r.status == 'absent')
+
+        # Get unique users and their stats
+        users_stats = {}
+        for record in query_list:
+            user_email = record.user.email
+            if user_email not in users_stats:
+                users_stats[user_email] = {
+                    'user_id': record.user.id,
+                    'email': user_email,
+                    'present': 0,
+                    'half_day': 0,
+                    'absent': 0
+                }
+            if record.status == 'present':
+                users_stats[user_email]['present'] += 1
+            elif record.status == 'half_day':
+                users_stats[user_email]['half_day'] += 1
+            elif record.status == 'absent':
+                users_stats[user_email]['absent'] += 1
+
+        return Response({
+            "month": month,
+            "year": year,
+            "filters_applied": {
+                "date": date_param,
+                "user_id": user_id,
+                "status": status_filter
+            },
+            "summary": {
+                "total_records": total_records,
+                "present": present_count,
+                "half_day": half_day_count,
+                "absent": absent_count
+            },
+            "users_statistics": users_stats,
+            "attendance_records": AttendanceSerializer(query_list, many=True).data
+        }, status=200)
+
 class TargetSummaryView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -602,29 +698,35 @@ class ProjectListAPIView(APIView):
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+
+
+
 class UserSalarySlipViewSet(viewsets.ViewSet):
     """
-    Employee Salary Slip API (User Side)
+    Employee Salary Slip API (Monthly Salary Model)
     """
     permission_classes = [IsAuthenticated]
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def slip(self, request):
         user = request.user
         today = date.today()
 
         # -----------------------
-        # Month & Year Input
+        # Month & Year
         # -----------------------
         try:
             month = int(request.query_params.get("month", today.month))
             year = int(request.query_params.get("year", today.year))
-        except:
+        except ValueError:
             return Response({"error": "Invalid month/year"}, status=400)
 
         total_days = calendar.monthrange(year, month)[1]
 
+        # -----------------------
         # CONSTANTS
+        # -----------------------
         ALLOWED_LEAVES = 4
         HALF = Decimal("0.5")
         ROUND_Q = Decimal("0.01")
@@ -663,7 +765,7 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
         # -----------------------
         present_days = 0
         absent_days = 0
-        half_day_counter = Decimal("0")
+        half_day_counter = Decimal("0.0")
         attendance_days = []
 
         for day in range(1, total_days + 1):
@@ -675,45 +777,45 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
                 attendance_days.append("-")
                 continue
 
-            # ABSENT
+            # Absent
             if not att or not att.check_in_time:
                 absent_days += 1
                 attendance_days.append("A")
                 continue
 
-            # PRESENT
+            # Present
             present_days += 1
             attendance_days.append("P")
 
             is_late_half = False
             is_early_half = False
 
-            # Late Check
-            if att.check_in_time and att.check_in_time.time() > cfg.late_allowed_time:
+            if att.check_in_time.time() > cfg.late_allowed_time:
                 is_late_half = True
 
-            # Early Leave Check
             if att.check_out_time and att.check_out_time.time() < cfg.early_leave_allowed_time:
                 is_early_half = True
 
-            # Apply half-day rules
+            # Half-day calculation
             if is_late_half and is_early_half:
-                half_day_counter += Decimal("1.0")  # FULL DAY
-            elif is_late_half:
-                half_day_counter += HALF
-            elif is_early_half:
+                half_day_counter += Decimal("1.0")
+            elif is_late_half or is_early_half:
                 half_day_counter += HALF
 
         # -----------------------
-        # DEDUCTIONS
+        # DEDUCTIONS (CORRECT)
         # -----------------------
-        unpaid_absences = max(0, absent_days - ALLOWED_LEAVES)
+        # If employee never came → full salary deduct
+        if present_days == 0:
+            unpaid_absences = working_days
+        else:
+            unpaid_absences = max(0, absent_days - ALLOWED_LEAVES)
 
-        half_day_deduction = (half_day_counter * (daily_salary / 1)).quantize(
+        absence_deduction = (Decimal(unpaid_absences) * daily_salary).quantize(
             ROUND_Q, rounding=ROUND_HALF_UP
         )
 
-        absence_deduction = (Decimal(unpaid_absences) * daily_salary).quantize(
+        half_day_deduction = (half_day_counter * daily_salary).quantize(
             ROUND_Q, rounding=ROUND_HALF_UP
         )
 
@@ -721,13 +823,16 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
         if target_area > 0 and sales_sum < target_area:
             target_penalty = Decimal(str(cfg.target_penalty_amount))
 
-        gross_salary = (Decimal(present_days) * daily_salary).quantize(
-            ROUND_Q, rounding=ROUND_HALF_UP
-        )
+        total_deduction = (
+            absence_deduction +
+            half_day_deduction +
+            target_penalty
+        ).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
 
-        total_deduction = (half_day_deduction + absence_deduction + target_penalty).quantize(
-            ROUND_Q
-        )
+        # -----------------------
+        # SALARY CALCULATION (FIXED)
+        # -----------------------
+        gross_salary = monthly_salary
 
         net_salary = gross_salary - total_deduction
         if net_salary < 0:
@@ -761,11 +866,10 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
             "total_deduction": float(total_deduction),
             "net_salary": float(net_salary),
 
-            "attendance_calendar": attendance_days
+            "attendance_calendar": attendance_days,
         }
 
         return Response(slip, status=200)
-
 
 
 from rest_framework.views import APIView
