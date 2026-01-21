@@ -301,54 +301,56 @@ class SalaryConfigViewSet(viewsets.ModelViewSet):
 # Attendance + Salary Calculations
 # ------------------------------------------------------
 
+
+ROUND_Q = Decimal("0.01")
+HALF = Decimal("0.5")
+ALLOWED_LEAVES = 4
+
+
 class AttendanceDashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated, IsSuperUser]
 
     # --------------------------------------------------
-    # DAILY STATUS
+    # DAILY STATUS (OK – minor optimization only)
     # --------------------------------------------------
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def daily(self, request):
         today = date.today()
-        users = User.objects.exclude(is_superuser=True).order_by('username')
+        users = User.objects.exclude(is_superuser=True).order_by("username")
 
         geolocator = Nominatim(user_agent="attendance_app")
 
         present_count = 0
         absent_count = 0
-
         data = []
+
+        def get_location(lat, lon):
+            if lat and lon:
+                try:
+                    loc = geolocator.reverse(f"{lat},{lon}", timeout=10)
+                    return loc.address if loc else "-"
+                except:
+                    return "-"
+            return "-"
 
         for user in users:
             att = Attendance.objects.filter(user=user, date=today).first()
 
             if att and att.check_in_time:
-                status_label = "Present"
+                status = "Present"
                 present_count += 1
             else:
-                status_label = "Absent"
+                status = "Absent"
                 absent_count += 1
-
-            def get_location(lat, lon):
-                if lat and lon:
-                    try:
-                        loc = geolocator.reverse(f"{lat},{lon}", timeout=10)
-                        return loc.address if loc else "-"
-                    except:
-                        return "-"
-                return "-"
 
             data.append({
                 "user_id": user.id,
                 "username": user.username,
                 "email": user.email,
-
-                "status": status_label,
-
+                "status": status,
                 "check_in": timezone.localtime(att.check_in_time).strftime("%H:%M:%S") if att and att.check_in_time else "-",
                 "check_in_location": get_location(att.check_in_latitude, att.check_in_longitude) if att else "-",
-
                 "check_out": timezone.localtime(att.check_out_time).strftime("%H:%M:%S") if att and att.check_out_time else "-",
                 "check_out_location": get_location(att.check_out_latitude, att.check_out_longitude) if att else "-"
             })
@@ -362,90 +364,58 @@ class AttendanceDashboardViewSet(viewsets.ViewSet):
         })
 
     # --------------------------------------------------
-    # MONTHLY SALARY
+    # MONTHLY SALARY (FIXED & CONSISTENT)
     # --------------------------------------------------
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def monthly(self, request):
         today = date.today()
-
         month = int(request.query_params.get("month", today.month))
         year = int(request.query_params.get("year", today.year))
         total_days = calendar.monthrange(year, month)[1]
 
         users = User.objects.exclude(is_superuser=True).order_by("username")
-
         report = []
 
         for user in users:
-
-            # ---------------------------------
-            # 1. Salary Config Check
-            # ---------------------------------
-
             try:
                 cfg = user.salary_config
             except:
-                report.append({
-                    "user": user.username,
-                    "error": "SalaryConfig missing"
-                })
+                report.append({"user": user.username, "error": "SalaryConfig missing"})
                 continue
 
             monthly_salary = Decimal(str(cfg.monthly_salary))
             working_days = cfg.working_days
-            daily_salary = (monthly_salary / working_days).quantize(ROUND_Q)
+            daily_salary = (monthly_salary / Decimal(working_days)).quantize(
+                ROUND_Q, rounding=ROUND_HALF_UP
+            )
 
-            # ---------------------------------
-            # 2. Monthly Target & Sales
-            # ---------------------------------
-
+            # Target & Sales
             mt = MonthlyTarget.objects.filter(user=user, month=month, year=year).first()
             target_area = float(mt.target_area) if mt else None
 
             sales = Sale.objects.filter(user=user, month=month, year=year).aggregate(sum=Sum("area_sold"))
             sales_total = float(sales["sum"]) if sales["sum"] else 0
 
-            # ---------------------------------
-            # 3. Attendance Loop
-            # ---------------------------------
-
             present_days = 0
             absent_days = 0
-            half_day_total = Decimal("0")
-            total_daily_deduction = Decimal("0")
-
+            half_day_count = Decimal("0")
             daily_details = []
 
             for day in range(1, total_days + 1):
                 d = date(year, month, day)
-
                 att = Attendance.objects.filter(user=user, date=d).first()
 
-                # Future dates → skip
                 if d > today:
-                    daily_details.append({
-                        "date": str(d),
-                        "status": "-",
-                        "half_day": 0,
-                        "deduction": 0
-                    })
+                    daily_details.append({"date": str(d), "status": "-"})
                     continue
-
-                # --------------------------
-                # ABSENT
-                # --------------------------
 
                 if not att or not att.check_in_time:
                     absent_days += 1
-                    half_day_total += Decimal("1.0")
-                    total_daily_deduction += daily_salary
-
                     daily_details.append({
                         "date": str(d),
                         "status": "Absent",
-                        "half_day": 1,
-                        "deduction": float(daily_salary),
+                        "deduction": 0
                     })
                     continue
 
@@ -455,42 +425,47 @@ class AttendanceDashboardViewSet(viewsets.ViewSet):
                 early = att.check_out_time and att.check_out_time.time() < cfg.early_leave_allowed_time
 
                 if late and early:
-                    day_half = Decimal("1.0")
+                    half = Decimal("1.0")
                 elif late or early:
-                    day_half = HALF
+                    half = HALF
                 else:
-                    day_half = Decimal("0")
+                    half = Decimal("0")
 
-                day_deduction = (day_half * daily_salary).quantize(ROUND_Q)
-
-                half_day_total += day_half
-                total_daily_deduction += day_deduction
+                half_day_count += half
 
                 daily_details.append({
                     "date": str(d),
-                    "status": "Present" if day_half == 0 else "Half Day" if day_half == HALF else "Full Deduct",
+                    "status": "Present" if half == 0 else "Half Day" if half == HALF else "Full Deduct",
+                    "half_day": float(half),
                     "late": late,
-                    "early_leave": early,
-                    "half_day": float(day_half),
-                    "deduction": float(day_deduction)
+                    "early_leave": early
                 })
 
-            # ---------------------------------
-            # 4. Target Penalty
-            # ---------------------------------
+            # -----------------------
+            # DEDUCTIONS (CORRECT)
+            # -----------------------
+
+            if present_days == 0:
+                unpaid_absences = working_days
+            else:
+                unpaid_absences = max(0, absent_days - ALLOWED_LEAVES)
+
+            absence_deduction = (Decimal(unpaid_absences) * daily_salary).quantize(ROUND_Q)
+            half_day_deduction = (half_day_count * daily_salary).quantize(ROUND_Q)
 
             target_penalty = Decimal("0.00")
-            if target_area is not None:
-                if sales_total < target_area:
-                    target_penalty = cfg.target_penalty_amount
+            if target_area is not None and sales_total < target_area:
+                target_penalty = Decimal(str(cfg.target_penalty_amount))
 
-            # ---------------------------------
-            # 5. Total Salary
-            # ---------------------------------
+            total_deduction = (
+                absence_deduction +
+                half_day_deduction +
+                target_penalty
+            ).quantize(ROUND_Q)
 
-            gross_salary = monthly_salary
-            total_deduction = (total_daily_deduction + target_penalty).quantize(ROUND_Q)
-            net_salary = (gross_salary - total_deduction).quantize(ROUND_Q)
+            net_salary = monthly_salary - total_deduction
+            if net_salary < 0:
+                net_salary = Decimal("0.00")
 
             report.append({
                 "user_id": user.id,
@@ -498,13 +473,15 @@ class AttendanceDashboardViewSet(viewsets.ViewSet):
 
                 "monthly_salary": float(monthly_salary),
                 "daily_salary": float(daily_salary),
-                "working_days": working_days,
 
                 "present_days": present_days,
                 "absent_days": absent_days,
+                "allowed_leaves": ALLOWED_LEAVES,
+                "unpaid_absences": unpaid_absences,
 
-                "half_day_total": float(half_day_total),
-                "total_daily_deduction": float(total_daily_deduction),
+                "half_day_count": float(half_day_count),
+                "absence_deduction": float(absence_deduction),
+                "half_day_deduction": float(half_day_deduction),
                 "target_penalty": float(target_penalty),
 
                 "total_deduction": float(total_deduction),
