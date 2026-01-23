@@ -362,31 +362,52 @@ class MonthlyAttendanceSummaryView(APIView):
             date__month=month
         )
 
-        total_present_days = attendances.count()
-        total_absent_days = total_days_in_month - total_present_days
+        # Count present days (has check_in and NOT half_day)
+        present_days = attendances.filter(check_in_time__isnull=False, is_half_day=False).count()
+        
+        # Count half-day (marked as half_day)
+        half_days = attendances.filter(is_half_day=True).count()
+        
+        # Count absent days (no check_in record or total days - (present + half))
+        absent_days = total_days_in_month - present_days - half_days
+        
+        # Total working days = present + (half_days * 0.5)
+        total_working_days = Decimal(present_days) + (Decimal(half_days) * Decimal("0.5"))
 
         # Get today's attendance for last check-in/out
         last_check_in_time = None
         last_check_out_time = None
         last_date = None
+        last_status = None
 
         try:
             today_record = Attendance.objects.get(user=user, date=today)
             last_check_in_time = today_record.check_in_time
             last_check_out_time = today_record.check_out_time
             last_date = today_record.date
+            last_status = "Half Day" if today_record.is_half_day else "Present"
         except Attendance.DoesNotExist:
             pass
 
         return Response({
             "month": month,
             "year": year,
-            "last_date": last_date,
-            "last_check_in_time": last_check_in_time,
-            "last_check_out_time": last_check_out_time,
             "total_days_in_month": total_days_in_month,
-            "total_present_days": total_present_days,
-            "total_absent_days": total_absent_days
+            "attendance_summary": {
+                "present_days": present_days,
+                "half_days": half_days,
+                "absent_days": absent_days,
+                "total_recorded_days": present_days,
+                "total_half_days": half_days,
+                "total_working_days": float(total_working_days)
+            },
+            "today_status": {
+                "date": last_date,
+                "check_in_time": last_check_in_time,
+                "check_out_time": last_check_out_time,
+                "status": last_status
+            },
+            "attendance_records": AttendanceSerializer(attendances.order_by('-date'), many=True).data
         }, status=200)
 
 class AdminAttendanceSummaryView(APIView):
