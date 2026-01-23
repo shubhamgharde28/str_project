@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'attendance',
     'admin_section',
     'notifications',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
