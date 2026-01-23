@@ -281,6 +281,8 @@ class AttendanceCheckInView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        from datetime import time
+        
         user = request.user
         latitude = request.data.get('latitude')
         longitude = request.data.get('longitude')
@@ -297,12 +299,30 @@ class AttendanceCheckInView(APIView):
         attendance.check_in_time = localtime(timezone.now())
         attendance.check_in_latitude = latitude
         attendance.check_in_longitude = longitude
+
+        # Check if check-in is after 10:45 AM (10:30 AM deadline + 15 min grace period)
+        check_in_hour = attendance.check_in_time.hour
+        check_in_minute = attendance.check_in_time.minute
+        check_in_second = attendance.check_in_time.second
+        
+        # 10:45 AM is the deadline after grace period
+        deadline_time = time(10, 45, 0)
+        check_in_time_only = time(check_in_hour, check_in_minute, check_in_second)
+        
+        if check_in_time_only > deadline_time:
+            attendance.is_half_day = True
+            late_message = " (Half day marked - check-in after 10:45 AM)"
+        else:
+            attendance.is_half_day = False
+            late_message = ""
+
         attendance.save()
 
         serializer = AttendanceSerializer(attendance)
         return Response({
-            "message": "Successfully checked in.",
+            "message": f"Successfully checked in.{late_message}",
             "check_in_time": attendance.check_in_time.strftime("%I:%M %p"),
+            "is_half_day": attendance.is_half_day,
             "attendance": AttendanceSerializer(attendance).data
         }, status=status.HTTP_200_OK)
 
@@ -360,19 +380,49 @@ class MonthlyAttendanceSummaryView(APIView):
             user=user,
             date__year=year,
             date__month=month
-        )
+        ).order_by('date')
 
-        # Count present days (has check_in and NOT half_day)
-        present_days = attendances.filter(check_in_time__isnull=False, is_half_day=False).count()
-        
-        # Count half-day (marked as half_day)
-        half_days = attendances.filter(is_half_day=True).count()
-        
-        # Count absent days (no check_in record or total days - (present + half))
-        absent_days = total_days_in_month - present_days - half_days
-        
-        # Total working days = present + (half_days * 0.5)
-        total_working_days = Decimal(present_days) + (Decimal(half_days) * Decimal("0.5"))
+        # Count present, half-day, and absent days
+        present_days = 0
+        half_days = Decimal("0")
+        absent_days = 0
+
+        attendance_list = []
+
+        for day in range(1, total_days_in_month + 1):
+            current_date = date(year, month, day)
+            att = attendances.filter(date=current_date).first()
+
+            # Future dates
+            if current_date > today:
+                status_symbol = "-"
+                status_name = "Future"
+            # No attendance record = absent
+            elif not att or not att.check_in_time:
+                absent_days += 1
+                status_symbol = "A"
+                status_name = "Absent"
+            # Has check-in - check if marked as half_day
+            elif att.is_half_day:
+                half_days += Decimal("0.5")
+                status_symbol = "H"
+                status_name = "Half-day"
+            # Full present day
+            else:
+                present_days += 1
+                status_symbol = "P"
+                status_name = "Present"
+
+            # Add to attendance list
+            attendance_list.append({
+                "date": current_date,
+                "day_number": day,
+                "status": status_symbol,
+                "status_name": status_name,
+                "check_in_time": att.check_in_time.strftime("%I:%M %p") if att and att.check_in_time else None,
+                "check_out_time": att.check_out_time.strftime("%I:%M %p") if att and att.check_out_time else None,
+                "is_half_day": att.is_half_day if att else False
+            })
 
         # Get today's attendance for last check-in/out
         last_check_in_time = None
@@ -385,29 +435,39 @@ class MonthlyAttendanceSummaryView(APIView):
             last_check_in_time = today_record.check_in_time
             last_check_out_time = today_record.check_out_time
             last_date = today_record.date
-            last_status = "Half Day" if today_record.is_half_day else "Present"
+            if today_record.is_half_day:
+                last_status = "Half-day"
+            elif today_record.check_in_time:
+                last_status = "Present"
+            else:
+                last_status = "Absent"
         except Attendance.DoesNotExist:
             pass
+
+        # Calculate paid attendance (present + half days)
+        paid_attendance = present_days + float(half_days)
 
         return Response({
             "month": month,
             "year": year,
             "total_days_in_month": total_days_in_month,
-            "attendance_summary": {
+            
+            "summary": {
                 "present_days": present_days,
-                "half_days": half_days,
+                "half_days": float(half_days),
                 "absent_days": absent_days,
-                "total_recorded_days": present_days,
-                "total_half_days": half_days,
-                "total_working_days": float(total_working_days)
+                "paid_attendance": paid_attendance,
+                "future_days": max(0, total_days_in_month - present_days - int(half_days) - absent_days)
             },
-            "today_status": {
+
+            "today": {
                 "date": last_date,
                 "check_in_time": last_check_in_time,
                 "check_out_time": last_check_out_time,
                 "status": last_status
             },
-            "attendance_records": AttendanceSerializer(attendances.order_by('-date'), many=True).data
+
+            "attendance_calendar": attendance_list
         }, status=200)
 
 class AdminAttendanceSummaryView(APIView):
@@ -785,8 +845,8 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
         # ATTENDANCE PROCESSING
         # -----------------------
         present_days = 0
+        half_days = Decimal("0.0")
         absent_days = 0
-        half_day_counter = Decimal("0.0")
         attendance_days = []
 
         for day in range(1, total_days + 1):
@@ -798,63 +858,64 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
                 attendance_days.append("-")
                 continue
 
-            # Absent
-            if not att or not att.check_in_time:
+            # CASE 1: NO ATTENDANCE RECORD = ABSENT
+            if not att:
                 absent_days += 1
                 attendance_days.append("A")
                 continue
 
-            # Present
-            present_days += 1
-            attendance_days.append("P")
+            # CASE 2: NO CHECK-IN = ABSENT
+            if not att.check_in_time:
+                absent_days += 1
+                attendance_days.append("A")
+                continue
 
-            is_late_half = False
-            is_early_half = False
-
-            if att.check_in_time.time() > cfg.late_allowed_time:
-                is_late_half = True
-
-            if att.check_out_time and att.check_out_time.time() < cfg.early_leave_allowed_time:
-                is_early_half = True
-
-            # Half-day calculation
-            if is_late_half and is_early_half:
-                half_day_counter += Decimal("1.0")
-            elif is_late_half or is_early_half:
-                half_day_counter += HALF
+            # CASE 3: HAS CHECK-IN - Check if marked as half_day
+            if att.is_half_day:
+                half_days += HALF
+                attendance_days.append("H")  # Half day
+            else:
+                present_days += 1
+                attendance_days.append("P")  # Present
 
         # -----------------------
         # DEDUCTIONS (CORRECT)
         # -----------------------
-        # If employee never came → full salary deduct
-        if present_days == 0:
-            unpaid_absences = working_days
-        else:
-            unpaid_absences = max(0, absent_days - ALLOWED_LEAVES)
+        # Unpaid absences = total absences - allowed leaves
+        unpaid_absences = max(0, absent_days - ALLOWED_LEAVES)
 
+        # Half-day deduction = half_days * daily_salary
+        half_day_deduction = (half_days * daily_salary).quantize(
+            ROUND_Q, rounding=ROUND_HALF_UP
+        )
+
+        # Absence deduction = unpaid_absences * daily_salary
         absence_deduction = (Decimal(unpaid_absences) * daily_salary).quantize(
             ROUND_Q, rounding=ROUND_HALF_UP
         )
 
-        half_day_deduction = (half_day_counter * daily_salary).quantize(
-            ROUND_Q, rounding=ROUND_HALF_UP
-        )
-
+        # Target penalty
         target_penalty = Decimal("0.00")
         if target_area > 0 and sales_sum < target_area:
             target_penalty = Decimal(str(cfg.target_penalty_amount))
 
+        # Total deduction
         total_deduction = (
-            absence_deduction +
             half_day_deduction +
+            absence_deduction +
             target_penalty
         ).quantize(ROUND_Q, rounding=ROUND_HALF_UP)
 
         # -----------------------
         # SALARY CALCULATION (FIXED)
         # -----------------------
-        gross_salary = monthly_salary
+        # Gross salary = (present_days + half_days) * daily_salary
+        paid_attendance = present_days + float(half_days)
+        gross_salary = (Decimal(str(paid_attendance)) * daily_salary).quantize(
+            ROUND_Q, rounding=ROUND_HALF_UP
+        )
 
+        # Net salary = Gross - Total Deduction
         net_salary = gross_salary - total_deduction
         if net_salary < 0:
             net_salary = Decimal("0.00")
@@ -866,26 +927,39 @@ class UserSalarySlipViewSet(viewsets.ViewSet):
             "month": month,
             "year": year,
 
-            "monthly_salary": float(monthly_salary),
-            "working_days": working_days,
-            "daily_salary": float(daily_salary),
+            "salary_config": {
+                "monthly_salary": float(monthly_salary),
+                "working_days": working_days,
+                "daily_salary": float(daily_salary),
+            },
 
-            "present_days": present_days,
-            "absent_days": absent_days,
-            "allowed_leaves": ALLOWED_LEAVES,
-            "unpaid_absences": unpaid_absences,
+            "attendance": {
+                "present_days": present_days,
+                "half_days": float(half_days),
+                "absent_days": absent_days,
+                "allowed_leaves": ALLOWED_LEAVES,
+                "unpaid_absences": unpaid_absences,
+                "paid_attendance": float(present_days + float(half_days)),
+            },
 
-            "half_day_count": float(half_day_counter),
-            "half_day_deduction": float(half_day_deduction),
-            "absence_deduction": float(absence_deduction),
+            "deductions": {
+                "half_day_deduction": float(half_day_deduction),
+                "absence_deduction": float(absence_deduction),
+                "target_penalty": float(target_penalty),
+                "total_deduction": float(total_deduction),
+            },
 
-            "target_area": target_area,
-            "sales_sum": sales_sum,
-            "target_penalty": float(target_penalty),
+            "sales": {
+                "target_area": target_area,
+                "sales_completed": sales_sum,
+                "target_status": "Achieved ✅" if sales_sum >= target_area else f"Pending ❌ ({target_area - sales_sum:.2f} remaining)"
+            },
 
-            "gross_salary": float(gross_salary),
-            "total_deduction": float(total_deduction),
-            "net_salary": float(net_salary),
+            "salary_calculation": {
+                "gross_salary": float(gross_salary),
+                "total_deduction": float(total_deduction),
+                "net_salary": float(net_salary),
+            },
 
             "attendance_calendar": attendance_days,
         }
