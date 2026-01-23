@@ -6,10 +6,17 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from rest_framework.routers import DefaultRouter
+from admin_section.views import ContactUsViewSet
+
+# Router for contact-us
+contact_router = DefaultRouter()
+contact_router.register('contact-us', ContactUsViewSet, basename='contact-us')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/admin_section/', include('admin_section.urls')),
+    path('api/', include(contact_router.urls)),
 
     path('api/attendance/', include('attendance.urls')),
     path('api/', include('attendance.urls')),

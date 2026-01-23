@@ -20,7 +20,7 @@ from datetime import date, timedelta
 import calendar
 from decimal import Decimal, ROUND_HALF_UP
 from rest_framework.decorators import action
-from .serializers import SignupSerializer, VerifyOTPSerializer, LoginSerializer, UserProfileSerializer, UserTargetStatusSerializer, WorkPlanSerializer, WorkPlanCreateSerializer,HourlyReportSerializer, HourlyReportCreateSerializer, AttendanceSerializer, ProjectSerializer, WorkTypeSerializer, WorkPlanTitleSerializer, UserDropdownSerializer, WorkPlanTitleDropdownSerializer, DailySummarySerializer
+from .serializers import SignupSerializer, VerifyOTPSerializer, LoginSerializer, UserProfileSerializer, UserTargetStatusSerializer, WorkPlanSerializer, WorkPlanCreateSerializer,HourlyReportSerializer, HourlyReportCreateSerializer, AttendanceSerializer, ProjectSerializer, WorkTypeSerializer, WorkPlanTitleSerializer, UserDropdownSerializer, WorkPlanTitleDropdownSerializer, DailySummarySerializer, ForgotPasswordRequestSerializer, ForgotPasswordOTPSerializer, ForgotPasswordResetSerializer
 from .models import WorkPlan, HourlyReport, Attendance, Project, WorkType, WorkPlanTitle, DailySummaryReport
 from admin_section.models import SalaryConfig, Sale, MonthlyTarget
 from django.utils.timezone import localtime
@@ -164,6 +164,175 @@ class ResendOTPView(APIView):
             "message": "OTP resent successfully.",
             "otp_last_sent": localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
             }, status=status.HTTP_200_OK)
+
+# ==================== FORGOT PASSWORD API ====================
+
+class ForgotPasswordRequestView(APIView):
+    """Step 1: User requests password reset by sending email"""
+    
+    def post(self, request):
+        serializer = ForgotPasswordRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        email = serializer.validated_data['email']
+        
+        # Generate OTP
+        otp = generate_otp()
+        
+        # Store in cache for 10 minutes
+        cache_key = f"forgot_password_{email}"
+        cache.set(cache_key, {'email': email, 'otp': otp}, timeout=600)
+        
+        # Send OTP via email
+        send_mail(
+            subject='Password Reset OTP',
+            message=f'Your OTP for password reset at SHREE TAJ REALTOR is {otp}. It will expire in 10 minutes. Do not share this OTP with anyone.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+        )
+        
+        return Response({
+            "message": "OTP sent to your email. Please verify to reset password.",
+            "email": email
+        }, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordVerifyOTPView(APIView):
+    """Step 2: User verifies OTP"""
+    
+    def post(self, request):
+        serializer = ForgotPasswordOTPSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        email = serializer.validated_data['email']
+        otp = serializer.validated_data['otp']
+        
+        # Get cached OTP
+        cache_key = f"forgot_password_{email}"
+        cached_data = cache.get(cache_key)
+        
+        if not cached_data:
+            return Response(
+                {"error": "OTP expired or not found. Please request a new one."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if cached_data['otp'] != otp:
+            return Response(
+                {"error": "Invalid OTP. Please try again."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Mark OTP as verified in cache
+        cache_key_verified = f"forgot_password_verified_{email}"
+        cache.set(cache_key_verified, {'email': email, 'verified': True}, timeout=300)  # 5 minutes
+        
+        return Response({
+            "message": "OTP verified successfully. You can now reset your password.",
+            "email": email
+        }, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordResetView(APIView):
+    """Step 3: User resets password with new password"""
+    
+    def post(self, request):
+        serializer = ForgotPasswordResetSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        email = serializer.validated_data['email']
+        otp = serializer.validated_data['otp']
+        new_password = serializer.validated_data['new_password']
+        
+        # Check if OTP was verified
+        cache_key_verified = f"forgot_password_verified_{email}"
+        verified_data = cache.get(cache_key_verified)
+        
+        if not verified_data:
+            return Response(
+                {"error": "OTP not verified. Please verify OTP first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get user and reset password
+        try:
+            user = User.objects.get(username=email)
+            user.set_password(new_password)
+            user.save()
+            
+            # Clear cache
+            cache.delete(f"forgot_password_{email}")
+            cache.delete(cache_key_verified)
+            
+            return Response({
+                "message": "Password reset successfully. You can now login with your new password.",
+                "email": email
+            }, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class ForgotPasswordResendOTPView(APIView):
+    """Resend OTP for forgot password"""
+    
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if user exists
+        try:
+            User.objects.get(username=email)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User with this email does not exist."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if there is a forgot password request already stored
+        cache_key = f"forgot_password_{email}"
+        cached_data = cache.get(cache_key)
+        
+        if not cached_data:
+            return Response(
+                {"error": "No password reset request found. Please request password reset again."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Rate limiting: allow resend only if last OTP was sent > 60 seconds ago
+        last_sent_key = f"forgot_password_last_sent_{email}"
+        last_sent = cache.get(last_sent_key)
+        if last_sent and (localtime(timezone.now()) - last_sent).total_seconds() < 60:
+            return Response(
+                {"error": "OTP already sent recently. Please wait before requesting again."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        # Generate new OTP
+        otp = generate_otp()
+        cached_data['otp'] = otp
+        cache.set(cache_key, cached_data, timeout=600)  # OTP valid for 10 minutes
+        cache.set(last_sent_key, localtime(timezone.now()), timeout=60)  # Rate limit
+        
+        # Send OTP via email
+        send_mail(
+            subject="Password Reset OTP (Resent)",
+            message=f"Your new OTP for password reset is {otp}. It will expire in 10 minutes.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+        )
+        
+        return Response({
+            "message": "OTP resent successfully.",
+            "otp_last_sent": localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
+        }, status=status.HTTP_200_OK)
 
 class CompleteProfileView(APIView):
     permission_classes = [IsAuthenticated]

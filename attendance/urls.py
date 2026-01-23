@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView,CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, AdminAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView, DailySummaryCreateView, DailySummaryListView, DailySummaryUpdateView, UserIncentiveViewSet
+from .views import SignupView, VerifyOTPView, LoginView, ResendOTPView, CompleteProfileView, UserTargetStatusAPI, AttendanceCheckInView, AttendanceCheckOutView, UserWorkPlanListCreateView, UserWorkPlanDetailView, UserWorkPlanAllView, HourlyReportCreateView, HourlyReportListView, MonthlyAttendanceSummaryView, AdminAttendanceSummaryView, TargetSummaryView, WorkPlanDropdownsAPIView, WorkTypeListAPIView, WorkPlanTitleListAPIView, ProjectListAPIView, LogoutView, UserSalarySlipViewSet, SimpleHourlyReportCheckAPI, HourlyReportUpdateView, DailySummaryCreateView, DailySummaryListView, DailySummaryUpdateView, UserIncentiveViewSet, ForgotPasswordRequestView, ForgotPasswordVerifyOTPView, ForgotPasswordResetView, ForgotPasswordResendOTPView
 
 router = DefaultRouter()
 router.register(r"user-salary-slip", UserSalarySlipViewSet, basename="user-salary-slip")
@@ -16,6 +16,12 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('resend-otp/', ResendOTPView.as_view(), name='resend-otp'),
     path('profile/complete/', CompleteProfileView.as_view(), name='profile-complete'),
+
+    # Forgot Password API
+    path('forgot-password/request/', ForgotPasswordRequestView.as_view(), name='forgot-password-request'),
+    path('forgot-password/verify-otp/', ForgotPasswordVerifyOTPView.as_view(), name='forgot-password-verify-otp'),
+    path('forgot-password/reset/', ForgotPasswordResetView.as_view(), name='forgot-password-reset'),
+    path('forgot-password/resend-otp/', ForgotPasswordResendOTPView.as_view(), name='forgot-password-resend-otp'),
 
     path('user/<int:user_id>/target-status/', UserTargetStatusAPI.as_view(), name='api-user-target-status'),
     path('user/<int:user_id>/target-status/<int:year>/', UserTargetStatusAPI.as_view(), name='api-user-target-status-year'),

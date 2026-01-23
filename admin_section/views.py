@@ -1,6 +1,6 @@
 # admin_section/views.py
 from django.shortcuts import get_object_or_404
-from .models import MonthlyTarget, Sale, SalaryConfig
+from .models import MonthlyTarget, Sale, SalaryConfig, ContactUs
 from rest_framework import viewsets, permissions, status
 from rest_framework.viewsets import ViewSet
 from django.db import models
@@ -18,7 +18,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.utils import timezone
 from .serializers import (
     WorkTypeSerializer_admin,
-    HourlyReportSerializer_admin, WorkDetailSerializer_admin,WorkPlanSerializer_admin,SalaryConfigSerializer, WorkPlanTitleSerializer_admin, MonthlyTargetSerializer, SaleSerializer, UserSerializer, UserProfileSerializer, ProjectSerializer_admin, DailySummarySerializer_admin
+    HourlyReportSerializer_admin, WorkDetailSerializer_admin,WorkPlanSerializer_admin,SalaryConfigSerializer, WorkPlanTitleSerializer_admin, MonthlyTargetSerializer, SaleSerializer, UserSerializer, UserProfileSerializer, ProjectSerializer_admin, DailySummarySerializer_admin, ContactUsSerializer
 )
 
 from .permissions import IsSuperUser
@@ -903,3 +903,100 @@ class IncentiveViewSet(viewsets.ModelViewSet):
     queryset = Incentive.objects.select_related('user', 'project').all()
     serializer_class = IncentiveSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class ContactUsViewSet(viewsets.ModelViewSet):
+    """
+    API ViewSet for Contact Us form submissions
+    - Anyone can create a contact form (POST without auth)
+    - Only admin/superuser can view, update, delete, and reply
+    """
+    queryset = ContactUs.objects.all()
+    serializer_class = ContactUsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        """
+        Allow unauthenticated users to create contact forms
+        Require authentication and superuser for other actions
+        """
+        if self.action == 'create':
+            permission_classes = [permissions.AllowAny]
+        else:
+            permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+        return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):
+        """
+        Admin can see all contact forms
+        Regular users can only see their own submissions
+        """
+        user = self.request.user
+        if user.is_superuser:
+            return ContactUs.objects.all()
+        # Regular users can view their own submissions by email
+        return ContactUs.objects.filter(email=user.email)
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsSuperUser])
+    def reply(self, request, pk=None):
+        """
+        Admin endpoint to reply to a contact form
+        POST /api/contact-us/{id}/reply/
+        
+        Request body:
+        {
+            "admin_reply": "Thank you for your message..."
+        }
+        """
+        contact = self.get_object()
+        admin_reply = request.data.get('admin_reply')
+        
+        if not admin_reply:
+            return Response(
+                {"error": "admin_reply field is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        contact.admin_reply = admin_reply
+        contact.status = 'replied'
+        contact.replied_by = request.user
+        contact.replied_at = timezone.now()
+        contact.save()
+        
+        serializer = self.get_serializer(contact)
+        return Response({
+            "message": "Reply sent successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsSuperUser])
+    def mark_as_read(self, request, pk=None):
+        """
+        Mark a contact form as read
+        POST /api/contact-us/{id}/mark_as_read/
+        """
+        contact = self.get_object()
+        contact.status = 'read'
+        contact.save()
+        
+        serializer = self.get_serializer(contact)
+        return Response({
+            "message": "Marked as read",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsSuperUser])
+    def close(self, request, pk=None):
+        """
+        Close a contact form
+        POST /api/contact-us/{id}/close/
+        """
+        contact = self.get_object()
+        contact.status = 'closed'
+        contact.save()
+        
+        serializer = self.get_serializer(contact)
+        return Response({
+            "message": "Contact form closed",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)

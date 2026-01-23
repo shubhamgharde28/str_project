@@ -116,3 +116,38 @@ class Incentive(models.Model):
     def __str__(self):
         return f"Incentive - {self.user.username} - Plot {self.plot_number}"
 
+
+class ContactUs(models.Model):
+    """Model to store contact form submissions"""
+    
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('read', 'Read'),
+        ('replied', 'Replied'),
+        ('closed', 'Closed'),
+    ]
+    
+    name = models.CharField(max_length=150)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='new')
+    
+    # Admin reply
+    admin_reply = models.TextField(blank=True, null=True)
+    replied_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='contact_replies')
+    replied_at = models.DateTimeField(null=True, blank=True)
+    
+    # System fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Contact Form'
+        verbose_name_plural = 'Contact Forms'
+    
+    def __str__(self):
+        return f"Contact from {self.name} - {self.subject}"
+

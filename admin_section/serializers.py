@@ -1,7 +1,7 @@
 # admin_section/serializers.py
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import MonthlyTarget, Sale, SalaryConfig
+from .models import MonthlyTarget, Sale, SalaryConfig, ContactUs
 from attendance.models import WorkType, HourlyReport, WorkDetail, WorkPlan, WorkPlanTitle, UserProfile, Project, DailySummaryReport
 
 class ProjectSerializer_admin(serializers.ModelSerializer):
@@ -249,4 +249,33 @@ class IncentiveSerializer(serializers.ModelSerializer):
             'balance_commission',
             'created_at',
             'updated_at'
+        ]
+
+
+class ContactUsSerializer(serializers.ModelSerializer):
+    replied_by_name = serializers.CharField(source='replied_by.username', read_only=True)
+    
+    class Meta:
+        model = ContactUs
+        fields = [
+            'id',
+            'name',
+            'email',
+            'phone',
+            'subject',
+            'message',
+            'status',
+            'admin_reply',
+            'replied_by',
+            'replied_by_name',
+            'replied_at',
+            'created_at',
+            'updated_at'
+        ]
+        
+        read_only_fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'replied_by_name'
         ]

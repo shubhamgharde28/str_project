@@ -1,7 +1,7 @@
 # admin_section/api/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet, TargetAndSaleDashboardViewSet, AdminUserViewSet, AttendanceDashboardViewSet, WorkPlanTitleViewSet, AdminWorkPlanViewSet, UserWorkPlanViewSet, WorkTypeViewSet, HourlyReportViewSet, WorkDetailViewSet, DashboardViewSet, SalaryConfigViewSet, ProjectViewSet, DailySummaryViewSet_admin, IncentiveViewSet
+from .views import MonthlyTargetViewSet, SaleViewSet, UserTargetStatusViewSet, TargetAndSaleDashboardViewSet, AdminUserViewSet, AttendanceDashboardViewSet, WorkPlanTitleViewSet, AdminWorkPlanViewSet, UserWorkPlanViewSet, WorkTypeViewSet, HourlyReportViewSet, WorkDetailViewSet, DashboardViewSet, SalaryConfigViewSet, ProjectViewSet, DailySummaryViewSet_admin, IncentiveViewSet, ContactUsViewSet
 
 router = DefaultRouter()
 
@@ -25,6 +25,8 @@ router.register(r'salary', SalaryConfigViewSet, basename='salary')
 router.register('daily-summaries', DailySummaryViewSet_admin, basename='admin-daily-summaries')
 
 router.register('incentives', IncentiveViewSet, basename='incentive')
+router.register('contact-us', ContactUsViewSet, basename='contact-us')
+
 urlpatterns = [
     path('', include(router.urls)),
 ]
